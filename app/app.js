@@ -1,4 +1,4 @@
-/* Creciendo Juntos Lite: app del agente comunitario (gestantes).
+/* Puriq Lite: app del agente comunitario (gestantes).
    Toda la lógica de negocio (semáforo, prioridad, ruta, IA) corre en el servidor (/api). */
 "use strict";
 
@@ -324,7 +324,7 @@ function vAyuda() {
   <section class="card"><h2>Versión Lite</h2>
     <p>Incluye gestantes, ruta, mapa y Ficha 3 con voz para un agente. La versión completa suma niñas y niños (CRED), modo sin conexión, panel del establecimiento (PROMSA) e integración con HIS.</p>
     <button class="sec" data-act="reiniciar">Reiniciar datos del demo</button></section>
-  <p class="foot">Creciendo Juntos Lite · ${esc(S.meta?.ia ? "IA: " + S.meta.modelo_ia : "IA sin configurar: se usan reglas")} · Whisper ${esc(S.meta?.whisper || "")}</p>`;
+  <p class="foot">Puriq Lite · ${esc(S.meta?.ia ? "IA: " + S.meta.modelo_ia : "IA sin configurar: se usan reglas")} · Whisper ${esc(S.meta?.whisper || "")}</p>`;
 }
 
 // ─────────────────────────────── render y navegación
@@ -336,7 +336,7 @@ function render() {
   const titulo = { ficha: S.det?.nombre || "Gestante", visita: "Visita domiciliaria", ayuda: "Ayuda" }[v];
   topEl.innerHTML = titulo && v !== "ayuda"
     ? `<button class="back" data-act="back">${ic("back")}Volver</button><h1>${esc(titulo)}</h1>`
-    : `<span class="brand"><span class="logo">${ic("sprout")}</span>Creciendo Juntos <span class="lite">LITE</span></span><span class="tag-mock">Datos ficticios</span>`;
+    : `<span class="brand"><svg class="logo" viewBox="0 0 64 64" aria-hidden="true"><use href="#i-puriq"/></svg>puriq <span class="lite">LITE</span></span><span class="tag-mock">Datos ficticios</span>`;
   main.innerHTML = { inicio: vInicio, ruta: vRuta, gestantes: vGestantes, ficha: vFicha, visita: vVisita, ayuda: vAyuda }[v]();
   const cur = v === "ficha" || v === "visita" ? "gestantes" : v;
   nav.innerHTML = [["inicio", "home", "Inicio"], ["ruta", "route", "Ruta"], ["gestantes", "users", "Gestantes"], ["ayuda", "info", "Ayuda"]]

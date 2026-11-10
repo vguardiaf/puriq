@@ -1,6 +1,6 @@
 ---
-title: Creciendo Juntos Lite
-emoji: 🌱
+title: Puriq
+emoji: 🚶
 colorFrom: blue
 colorTo: green
 sdk: docker
@@ -9,7 +9,11 @@ pinned: false
 license: other
 ---
 
-# 🌱 Creciendo Juntos Lite
+<p align="center"><img src="docs/logo/puriq-logo-color.svg" alt="Puriq: rutas que cuidan" width="360"></p>
+
+# Puriq · rutas que cuidan
+
+*Puriq* significa "el que camina" en quechua: el agente comunitario que recorre su sector casa por casa. Esta es la versión **Lite**, nacida del mockup *Creciendo Juntos*.
 
 > **Ayudamos a los agentes comunitarios de salud a no perder a ninguna gestante: la app arma la ruta del día según la urgencia y convierte la conversación de la visita en la Ficha 3 llena, con los mensajes que debe darle.**
 

@@ -1,4 +1,4 @@
-"""API de Creciendo Juntos Lite (FastAPI) + archivos de la app web.
+"""API de Puriq Lite (FastAPI) + archivos de la app web.
 
     uvicorn backend.main:app --reload
 """
@@ -30,7 +30,7 @@ async def _vida(_app: FastAPI):
     yield
 
 
-app = FastAPI(title="Creciendo Juntos Lite", version="0.1.0", docs_url="/api/docs", redoc_url=None, lifespan=_vida)
+app = FastAPI(title="Puriq Lite", version="0.1.0", docs_url="/api/docs", redoc_url=None, lifespan=_vida)
 
 
 def _gestante(gid: str) -> dict:
