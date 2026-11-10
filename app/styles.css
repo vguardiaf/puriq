@@ -42,8 +42,9 @@ button{cursor:pointer}
 main{flex:1;padding-block:16px 28px;display:flex;flex-direction:column;gap:16px;outline:none}
 
 /* semáforo y niveles de prioridad */
-.st-rojo,.st-urgente{--x:var(--red);--x-bg:var(--red-bg);--x-ink:var(--red-ink)}
-.st-amar,.st-vencida{--x:var(--amb);--x-bg:var(--amb-bg);--x-ink:var(--amb-ink)}
+.st-rojo,.st-vencida{--x:var(--red);--x-bg:var(--red-bg);--x-ink:var(--red-ink)}
+.st-amar,.st-alerta{--x:var(--amb);--x-bg:var(--amb-bg);--x-ink:var(--amb-ink)}
+.st-seguimiento{--x:var(--violet);--x-bg:var(--violet-bg);--x-ink:var(--violet-ink)}
 .st-verde,.st-ok,.st-toca{--x:var(--grn);--x-bg:var(--grn-bg);--x-ink:var(--grn-ink)}
 .st-rec{--x:var(--done);--x-bg:var(--done-bg);--x-ink:var(--done-ink)}
 .st-fut,.st-al_dia{--x:var(--fut);--x-bg:var(--fut-bg);--x-ink:var(--fut-ink)}
@@ -222,4 +223,9 @@ textarea{min-height:110px;resize:vertical}
 .toast[hidden]{display:none}
 .toast .ic{color:#7FD6B0}
 .toast button{margin-left:auto;background:none;border:0;color:#fff;font-weight:700;text-decoration:underline;min-height:44px;padding:0 8px}
+.wa{background:#ECE5DD;border-radius:16px;padding:10px;display:flex;flex-direction:column;gap:8px}
+.wa-head{display:flex;gap:8px;align-items:center;font-size:14px;font-weight:700;color:#075E54}
+.wa-bubble{margin:0;background:#DCF8C6;color:#111B21;border-radius:12px 12px 4px 12px;padding:10px 12px;font-size:15px;line-height:1.4;align-self:flex-end;max-width:94%;overflow-wrap:anywhere}
+.wa-time{display:block;text-align:right;font-size:12px;color:#5B6B60;margin-top:4px}
 .foot{font-size:13px;color:var(--muted);text-align:center;margin:4px 0 0}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}

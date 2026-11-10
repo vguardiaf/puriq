@@ -25,8 +25,9 @@ async function api(path, opts = {}) {
 }
 
 const NIVEL = {
-  urgente: { t: "Urgente", i: "alert", color: "#D12F2F" },
-  vencida: { t: "Visita vencida", i: "cal", color: "#B97F00" },
+  alerta: { t: "Alerta de servicio", i: "alert", color: "#B97F00" },
+  seguimiento: { t: "Seguimiento de derivación", i: "hosp", color: "#5B4BC4" },
+  vencida: { t: "Visita vencida", i: "cal", color: "#D12F2F" },
   toca: { t: "Le toca visita", i: "bell", color: "#2B8E4E" },
   recomendada: { t: "Recomendada", i: "info", color: "#1F4E8C" },
   al_dia: { t: "Al día", i: "check", color: "#8A92A3" },
@@ -53,7 +54,9 @@ function vInicio() {
   const h = new Date().getHours();
   const hola = h < 12 ? "Buenos días" : h < 19 ? "Buenas tardes" : "Buenas noches";
   const nombreAg = (S.meta?.agente || "").split(" ")[0];
-  const alertas = L.filter((g) => g.prioridad.nivel === "urgente");
+  const alertas = L.filter((g) => g.alertas.length).sort((a, b) => b.prioridad.puntaje - a.prioridad.puntaje);
+  const porVencer = L.filter((g) => g.recordatorios.some((r) => r.dias_para_vencer <= 7)).length;
+  const dm = (iso) => `${+iso.slice(8, 10)}/${+iso.slice(5, 7)}`;
   const cuenta = { rojo: 0, amar: 0, ok: 0 };
   L.forEach((g) => cuenta[g.bucket]++);
   const vencidas = L.filter((g) => g.prioridad.nivel === "vencida").length;
@@ -62,14 +65,16 @@ function vInicio() {
   const seg = ["rojo", "amar", "ok"].map((k) => (cuenta[k] ? `<i class="st-${k}" style="flex:${cuenta[k]}"></i>` : "")).join("");
   return `
   <header class="greet"><h2>${hola}, ${esc(nombreAg)}</h2><p>${esc(cap(fmtL(d)))} · ${esc(S.meta?.localidad || "")}, ${esc(S.meta?.region || "")}</p></header>
-  ${alertas.length ? `<section class="card" aria-labelledby="h-al"><div class="sec-head"><h2 id="h-al">Alertas de hoy</h2><span class="muted">${alertas.length}</span></div>
-    ${alertas.map((g) => `<button class="alert st-urgente" data-act="open" data-id="${g.id}">
-      <span class="ai">${ic("alert")}</span><span><b>${esc(g.nombre)}</b><small>${esc(g.prioridad.razones[0] || "")}</small></span>${ic("chev")}</button>`).join("")}
-  </section>` : ""}
   <button class="cta" data-act="go" data-view="ruta">
     <span class="ci">${ic("route")}</span>
     <span><b>Tu ruta de hoy</b><span>${R ? `${R.visitas} ${plural(R.visitas, "visita", "visitas")} · ${R.km} km · terminas a las ${R.fin}` : "Calculando…"}</span></span>${ic("chev", "go")}
   </button>
+  ${alertas.length ? `<section class="card" aria-labelledby="h-al"><div class="sec-head"><h2 id="h-al">Alertas de servicios</h2><span class="muted">${alertas.length} ${plural(alertas.length, "gestante", "gestantes")}</span></div>
+    <p class="muted">Servicios que vencieron pero aún se pueden hacer. Motívela a ir al establecimiento.</p>
+    ${alertas.slice(0, 3).map((g) => `<button class="alert st-amar" data-act="open" data-id="${g.id}">
+      <span class="ai">${ic("alert")}</span><span><b>${esc(g.nombre)}</b><small>${esc(g.alertas.map((a) => a.nombre).join(", "))} · hasta el parto (${dm(g.alertas[0].limite)})</small></span>${ic("chev")}</button>`).join("")}
+    ${alertas.length > 3 ? `<button class="link" data-act="list" data-f="alerta">Ver las ${alertas.length} alertas</button>` : ""}
+  </section>` : ""}
   <section class="card" aria-labelledby="h-g">
     <div class="sec-head"><h2 id="h-g">Gestantes</h2><span class="muted">${L.length} en tu sector</span></div>
     <div class="bar" aria-hidden="true">${seg}</div>
@@ -81,6 +86,7 @@ function vInicio() {
     <div class="chips">
       <button class="fchip st-vencida" data-act="list" data-f="vencida" aria-pressed="false">${ic("cal")}${vencidas} con visita vencida</button>
       <button class="fchip st-toca" data-act="list" data-f="toca" aria-pressed="false">${ic("bell")}${tocan} les toca visita</button>
+      <span class="fchip st-verde">${ic("bell")}${porVencer} con servicios por vencer esta semana</span>
     </div>
   </section>
   <section class="card" aria-label="Qué significan los colores">
@@ -124,7 +130,7 @@ function vRuta() {
     </div>
     ${T.ahorro_pct > 0 ? `<p class="save">${ic("check")}Caminas ${T.ahorro_pct} % menos que visitando en el orden de la lista (${T.km_sin_optimizar} km).</p>` : ""}
     <div id="map" role="img" aria-label="Mapa de Quinua con las casas de las gestantes y la ruta numerada"></div>
-    <p class="muted">Primero las urgentes; luego las que suman más prioridad por minuto de camino. Cada visita cuenta 25 min (la norma pide al menos 20).</p>
+    <p class="muted">Entran primero las que suman más prioridad (alertas de servicios, visita vencida, recordatorios por vencer) por minuto de camino. Cada visita cuenta 25 min (la norma pide al menos 20).</p>
   </section>
   ${R.paradas.length ? `<ol class="stops" aria-label="Paradas en orden">${paradas}</ol>` : `<div class="empty">No hay visitas pendientes para hoy.</div>`}
   ${R.fuera.length ? `<details class="card"><summary class="link">No entran hoy (${R.fuera.length}): quedan para mañana</summary>
@@ -137,7 +143,7 @@ function vGestantes() {
   const f = S.filtro;
   const q = S.q.trim().toLowerCase();
   const pasa = (g) =>
-    (f === "all" || g.bucket === f || g.prioridad.nivel === f) &&
+    (f === "all" || (f === "alerta" ? g.alertas.length > 0 : g.bucket === f || g.prioridad.nivel === f)) &&
     (!q || g.nombre.toLowerCase().includes(q) || g.sector.toLowerCase().includes(q));
   const rows = L.filter(pasa).sort((a, b) => b.prioridad.puntaje - a.prioridad.puntaje);
   const chip = (k, t, st) => `<button class="fchip ${st ? "st-" + st : ""}" data-act="filtro" data-f="${k}" aria-pressed="${f === k}">${t}</button>`;
@@ -145,7 +151,7 @@ function vGestantes() {
   <label class="sr" for="q">Buscar gestante</label>
   <input id="q" class="search" type="search" placeholder="Buscar por nombre o sector" value="${esc(S.q)}" autocomplete="off">
   <div class="chips" role="group" aria-label="Filtrar">
-    ${chip("all", "Todas")}${chip("urgente", "Urgentes", "urgente")}${chip("vencida", "Visita vencida", "vencida")}${chip("rojo", "Con perdidos", "rojo")}${chip("amar", "Con pendientes", "amar")}
+    ${chip("all", "Todas")}${chip("alerta", "Alertas de servicio", "alerta")}${chip("vencida", "Visita vencida", "vencida")}${chip("seguimiento", "Seguimiento", "seguimiento")}${chip("rojo", "Con perdidos", "rojo")}
   </div>
   <p class="muted" aria-live="polite">${rows.length} ${plural(rows.length, "gestante", "gestantes")} · ordenadas por prioridad</p>
   ${rows.length ? `<ul class="list">${rows.map((g) => {
@@ -172,8 +178,8 @@ function vFicha() {
   const g = S.det;
   if (!g) return `<div class="empty">Cargando…</div>`;
   const by = (k) => g.servicios.filter((s) => s.estado === k);
-  const G = [["rojo", "Perdidos", "Ya no se pueden recuperar", true], ["amar", "Pendientes", "Aún se pueden hacer: toque para registrar", true],
-    ["verde", "Servicios próximos", "En su fecha: toque para registrar", true], ["fut", "Más adelante", "Todavía no corresponde", false], ["rec", "Entregados", "Ya se brindaron", false]];
+  const G = [["rojo", "Perdidos", "Ya no se pueden recuperar", true], ["amar", "Pendientes", "Aún se pueden hacer en el EESS: toque si ya se entregó", true],
+    ["verde", "Servicios próximos", "En su fecha: toque si ya se entregó", true], ["fut", "Más adelante", "Todavía no corresponde", false], ["rec", "Entregados", "Ya se brindaron", false]];
   const grupos = G.map(([k, t, sub, open]) => {
     const l = by(k);
     if (!l.length) return "";
@@ -186,9 +192,9 @@ function vFicha() {
     }).join("")}</ul>`;
     return open ? `<section class="grp st-${k}"><div class="gh">${head}</div>${body}</section>` : `<details class="grp st-${k}"><summary>${head}</summary>${body}</details>`;
   }).join("");
-  const al = g.alerta;
+  const al = g.alertas;
   const hist = g.historial.length
-    ? `<ul class="hist">${g.historial.map((v) => `<li class="${v.urgente ? "st-urgente" : "st-rec"}"><b>${fmt(v.fecha)}</b> · ${v.origen === "app" ? "Ficha 3 grabada" : "Visita"}${v.urgente ? " · <b>referida al EESS</b>" : ""}<br><span class="muted">${esc(v.resumen || (v.mensajes || []).join(", "))}</span></li>`).join("")}</ul>`
+    ? `<ul class="hist">${g.historial.map((v) => `<li class="${v.derivada ? "st-rojo" : "st-rec"}"><b>${fmt(v.fecha)}</b> · ${v.origen === "app" ? "Ficha 3 grabada" : "Visita"}${v.derivada ? " · <b>derivada al EESS por WhatsApp</b>" : ""}<br><span class="muted">${esc(v.resumen || (v.mensajes || []).join(", "))}</span></li>`).join("")}</ul>`
     : `<p class="muted">Todavía no tiene visitas registradas.</p>`;
   return `
   <section class="hero st-${g.bucket}">
@@ -203,7 +209,7 @@ function vFicha() {
       <div><dt>PROGRAMA SOCIAL</dt><dd>${esc(g.programa_social)}</dd></div>
     </dl>
   </section>
-  ${al ? `<div class="banner st-urgente" role="alert">${ic("alert")}<div><b>Alerta reportada hace ${al.hace_horas} h</b>${esc(g.prioridad.razones[0])}</div></div>` : ""}
+  ${al.length ? `<div class="banner st-amar">${ic("alert")}<div><b>Alerta de servicio</b>${esc(al.map((a) => a.nombre).join(", "))}: venció su fecha, pero aún se puede hacer hasta el parto. Motívela a ir al establecimiento.</div></div>` : ""}
   <button class="big" data-act="visita" data-id="${g.id}">${ic("mic")}Visita domiciliaria · Ficha 3</button>
   ${g.prioridad.razones.length ? `<section class="card st-${g.prioridad.nivel}"><div class="sec-head"><h2>Por qué visitarla</h2>${pillNivel(g.prioridad.nivel)}</div>
     <ul>${g.prioridad.razones.map((r) => `<li>${esc(r)}</li>`).join("")}</ul></section>` : ""}
@@ -236,7 +242,7 @@ function vVisita() {
       <h2 id="h-rec">Grabar visita</h2>
       <button class="recbtn" data-act="grabar" aria-label="Empezar a grabar la visita">${ic("mic")}</button>
       <p class="muted">Pida permiso a la gestante antes de grabar. Converse con normalidad: la app llena <b>suplementos, por qué no los toma, signos de alarma y hábitos</b>.</p>
-      ${v.error ? `<p class="banner st-urgente" role="alert">${ic("alert")}<span>${esc(v.error)}</span></p>` : ""}
+      ${v.error ? `<p class="banner st-rojo" role="alert">${ic("alert")}<span>${esc(v.error)}</span></p>` : ""}
       <button class="sec" data-act="ejemplo">${ic("play")}Usar audio de ejemplo (demo)</button>
       <button class="ghost" data-act="manual">Llenar sin grabar</button>
     </section>`;
@@ -291,9 +297,15 @@ function vVisita() {
   const sit = R.mensajes.filter((m) => m.origen === "situacion"), tri = R.mensajes.filter((m) => m.origen === "trimestre");
   const msg = (m) => `<article class="msg${m.origen === "situacion" ? " sit" : ""}"><div class="mh"><h3>${esc(m.titulo)}</h3></div><p class="say">${esc(m.decir)}</p></article>`;
   return `${datos}
-    ${R.urgente ? `<div class="banner st-urgente" role="alert">${ic("hosp")}<div><b>Referir HOY al establecimiento de salud</b>
-      <ul>${R.referencias.map((r) => `<li>${esc(r)}</li>`).join("")}</ul></div></div>`
-      : R.referencias.length ? `<div class="banner st-amar">${ic("hosp")}<div><b>Motivos de referencia al EESS</b><ul>${R.referencias.map((r) => `<li>${esc(r)}</li>`).join("")}</ul></div></div>` : ""}
+    ${R.derivacion ? `<section class="card deriv" role="alert" aria-labelledby="h-d">
+      <div class="banner st-rojo">${ic("hosp")}<div><b id="h-d">Derivada al establecimiento por WhatsApp</b>
+        Se detectaron signos de alarma. Enviado a ${esc(R.derivacion.para)} a las ${esc(R.derivacion.enviada_en)}. Indíquele que vaya hoy mismo.</div></div>
+      <div class="wa" aria-label="Mensaje enviado"><div class="wa-head">${ic("msg")}${esc(R.derivacion.para)} · ${esc(R.derivacion.contacto)}</div>
+        <p class="wa-bubble">${esc(R.derivacion.texto).replace(/\*([^*]+)\*/g, "<b>$1</b>").replace(/\n/g, "<br>")}<span class="wa-time">${esc(R.derivacion.enviada_en)} ✓✓</span></p></div>
+      <a class="sec" href="${esc(R.derivacion.enlace)}" target="_blank" rel="noopener">${ic("msg")}Abrir en WhatsApp</a>
+      <p class="muted">Versión Lite: el envío se simula y puedes reenviarlo con el botón. La versión completa lo envía sola con WhatsApp Business.</p>
+    </section>` : ""}
+    ${(R.referencias || []).filter((x) => !x.startsWith("Presenta signos")).length ? `<div class="banner st-amar">${ic("hosp")}<div><b>Motivos de referencia al EESS</b><ul>${R.referencias.filter((x) => !x.startsWith("Presenta signos")).map((r) => `<li>${esc(r)}</li>`).join("")}</ul></div></div>` : ""}
     <section class="card" aria-labelledby="h-m"><div class="sec-head"><h2 id="h-m">Qué decirle hoy</h2>${R.fuente === "ia" ? `<span class="pill st-ia">${ic("sprout")}Redactado con IA</span>` : ""}</div>
       ${sit.length ? `<h3>Por lo que encontraste en la visita</h3>${sit.map(msg).join("")}` : ""}
       ${tri.length ? `<h3>Por estar en el ${TRIM[R.trimestre]} trimestre (semana ${R.semana})</h3>${tri.map(msg).join("")}` : ""}
@@ -307,11 +319,19 @@ function vVisita() {
 
 function vAyuda() {
   return `
+  <section class="card"><h2>Tu rol y las alertas</h2>
+    <p>Tú no brindas servicios: haces <b>seguimiento</b>. Por eso las alertas son de <b>servicios</b>: controles, exámenes y suplementos que la gestante debe recibir en el establecimiento.</p>
+    <ul>
+      <li><b>Alerta de servicio (ámbar):</b> venció su fecha, pero aún se puede hacer hasta el parto. Motívela a ir.</li>
+      <li><b>Recordatorio (verde):</b> está en su fecha; sube de prioridad si vence en los próximos 7 días.</li>
+      <li><b>Signos de alarma:</b> no se programan. Si los detectas en la visita (Ficha 3), la app <b>deriva automáticamente al establecimiento por WhatsApp</b>.</li>
+    </ul></section>
   <section class="card"><h2>Cómo se arma tu ruta</h2>
     <ul>
-      <li><b>Urgentes primero:</b> alertas que avisó la familia o signos de alarma en la última visita.</li>
+      <li><b>Alertas de servicio</b> y <b>recordatorios por vencer</b> suman más puntos; más aún si el parto está cerca.</li>
       <li><b>Visita vencida:</b> la norma pide 2 visitas al mes, cada 13 a 15 días. Pasados los 15 días sube la prioridad.</li>
-      <li><b>Servicios pendientes o en fecha</b> (controles, exámenes, hierro), <b>no toma suplementos</b>, <b>cerca del parto</b> o <b>gestante adolescente</b> suman puntos.</li>
+      <li><b>Seguimiento:</b> si la derivaste en la visita anterior, toca verificar que la atendieron.</li>
+      <li><b>No toma suplementos</b>, <b>cerca del parto</b> o <b>gestante adolescente</b> también suman.</li>
       <li>Luego la app elige a quién visitar según los <b>puntos por minuto de camino</b> y ordena las casas para caminar menos (2-opt), dentro del tiempo que tienes.</li>
     </ul></section>
   <section class="card"><h2>Qué graba la Ficha 3</h2>
@@ -494,7 +514,7 @@ async function guardarVisita() {
       duracion_s: v.duracion ? Math.round(v.duracion) : v.seg || null }) });
     S.v = null;
     await cargarLista();
-    toast(R.urgente ? "Visita guardada · referida al EESS" : "Visita guardada");
+    toast(R.urgente ? "Visita guardada · derivada al EESS" : "Visita guardada");
     go("ficha", { pid: S.det.id });
   } catch (e) { toast(e.message); }
 }

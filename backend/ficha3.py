@@ -137,7 +137,25 @@ def seleccionar_mensajes(campos: dict, trimestre: int, pendientes_control: bool)
     for mid in POR_TRIMESTRE.get(trimestre, []):
         add(mid, "trimestre")
 
-    return {"urgente": bool(signos_si), "referencias": referencias, "mensajes": mensajes}
+    return {"urgente": bool(signos_si), "signos_alarma": [SIGNOS_ALARMA[s] for s in signos_si],
+            "referencias": referencias, "mensajes": mensajes}
+
+
+def texto_derivacion(r: dict, signos: list[str], agente: str, celular_agente: str, eess: str, hora: str) -> str:
+    """Mensaje de WhatsApp que recibe el establecimiento cuando la visita detecta signos de alarma."""
+    return "\n".join([
+        "*Derivación de gestante con signos de alarma* · Puriq",
+        f"Para: {eess}",
+        "",
+        f"Gestante: {r['nombre']} · DNI {r['dni']} · {r['edad']} años",
+        f"Semana {r['semana']} de gestación · parto probable {r['fpp'][8:10]}/{r['fpp'][5:7]}/{r['fpp'][:4]}",
+        f"Dirección: {r['direccion']} · Cel. {r['celular']}",
+        "Signos de alarma detectados en la visita domiciliaria:",
+        *[f"• {s}" for s in signos],
+        "",
+        f"Detectado por: {agente} (agente comunitaria) · Cel. {celular_agente} · {hora}",
+        "Se indicó a la gestante acudir hoy al establecimiento. Por favor, confirmar la atención.",
+    ])
 
 
 def catalogo() -> dict:

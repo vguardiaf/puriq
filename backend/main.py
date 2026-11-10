@@ -6,7 +6,9 @@ from __future__ import annotations
 
 import os
 from contextlib import asynccontextmanager
+from datetime import datetime
 from pathlib import Path
+from urllib.parse import quote
 
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.responses import FileResponse
@@ -22,6 +24,7 @@ from .store import STORE
 RAIZ = Path(__file__).resolve().parents[1]
 WEB = RAIZ / "app" / "dist" if (RAIZ / "app" / "dist" / "index.html").exists() else RAIZ / "app"
 MAX_AUDIO = 15 * 1024 * 1024
+AGENTE, CELULAR_AGENTE = "Rosa Huamán", "51911111111"  # agente ficticia del demo
 
 @asynccontextmanager
 async def _vida(_app: FastAPI):
@@ -47,7 +50,7 @@ def _con_prioridad(r: dict) -> dict:
 # ─────────────────────────────── lectura
 @app.get("/api/estado")
 def estado():
-    return {**STORE.meta, "hoy": STORE.hoy.isoformat(), "agente": "Rosa Huamán (agente comunitaria)",
+    return {**STORE.meta, "hoy": STORE.hoy.isoformat(), "agente": f"{AGENTE} (agente comunitaria)", "eess": STORE.inicio["nombre"],
             "ia": bool(os.getenv("ANTHROPIC_API_KEY")), "modelo_ia": ia.MODELO,
             "whisper": os.getenv("WHISPER_MODEL", "small"), "version": "Lite"}
 
@@ -135,7 +138,20 @@ def mensajes(body: Campos):
     r = STORE.resumen(g)
     sel = ficha3.seleccionar_mensajes(body.campos, r["trimestre"], _pendientes_control(body.gestante_id))
     red = ia.redactar(g["nombre"], r["semana"], sel["mensajes"], body.transcripcion, sel["urgente"])
-    return {**sel, **red, "trimestre": r["trimestre"], "semana": r["semana"]}
+    derivacion = None
+    if sel["urgente"]:
+        # Signos de alarma: el agente no atiende, deriva. Se envía al EESS por WhatsApp de forma automática.
+        # Versión Lite: el envío se simula y se ofrece el enlace wa.me; la versión completa usa la API
+        # de WhatsApp Business para enviarlo sin intervención.
+        hora = datetime.now().strftime("%H:%M")
+        eess = STORE.inicio
+        texto = ficha3.texto_derivacion(r, sel["signos_alarma"], AGENTE, CELULAR_AGENTE, eess["nombre"], hora)
+        derivacion = STORE.registrar_derivacion(body.gestante_id, {
+            "para": eess["nombre"], "contacto": eess.get("contacto", ""), "numero": eess.get("whatsapp", ""),
+            "signos": sel["signos_alarma"], "texto": texto,
+            "enlace": f"https://wa.me/{eess.get('whatsapp', '')}?text={quote(texto)}", "simulada": True,
+        })
+    return {**sel, **red, "derivacion": derivacion, "trimestre": r["trimestre"], "semana": r["semana"]}
 
 
 class Guardar(BaseModel):
@@ -153,6 +169,7 @@ class Guardar(BaseModel):
 def guardar(body: Guardar):
     _gestante(body.gestante_id)
     visita = body.model_dump(exclude={"gestante_id"})
+    visita["derivada"] = body.urgente
     visita["mensajes"] = [m.get("titulo", "") for m in body.mensajes]
     return _con_prioridad(STORE.registrar_visita(body.gestante_id, visita))
 

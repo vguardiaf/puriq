@@ -7,7 +7,9 @@
  "inicio": {
   "nombre": "Puesto de Salud Quinua",
   "lat": -13.0524,
-  "lon": -74.1392
+  "lon": -74.1392,
+  "whatsapp": "51900000000",
+  "contacto": "Obstetra de guardia (número ficticio)"
  },
  "gestantes": [
   {
@@ -25,8 +27,7 @@
    "ultima_visita_hace_dias": 33,
    "agua_desague": true,
    "programa_social": "Juntos",
-   "no_consume_suplemento_ultima_visita": false,
-   "alerta_reportada": null
+   "no_consume_suplemento_ultima_visita": false
   },
   {
    "id": "G02",
@@ -43,8 +44,7 @@
    "ultima_visita_hace_dias": 9,
    "agua_desague": true,
    "programa_social": "Juntos",
-   "no_consume_suplemento_ultima_visita": true,
-   "alerta_reportada": null
+   "no_consume_suplemento_ultima_visita": true
   },
   {
    "id": "G03",
@@ -61,8 +61,7 @@
    "ultima_visita_hace_dias": 33,
    "agua_desague": false,
    "programa_social": "Juntos",
-   "no_consume_suplemento_ultima_visita": true,
-   "alerta_reportada": null
+   "no_consume_suplemento_ultima_visita": true
   },
   {
    "id": "G04",
@@ -79,8 +78,7 @@
    "ultima_visita_hace_dias": 6,
    "agua_desague": true,
    "programa_social": "Ninguno",
-   "no_consume_suplemento_ultima_visita": false,
-   "alerta_reportada": null
+   "no_consume_suplemento_ultima_visita": false
   },
   {
    "id": "G05",
@@ -97,15 +95,7 @@
    "ultima_visita_hace_dias": 9,
    "agua_desague": true,
    "programa_social": "Juntos",
-   "no_consume_suplemento_ultima_visita": false,
-   "alerta_reportada": {
-    "signos": [
-     "hinchazon",
-     "vision_cefalea"
-    ],
-    "fuente": "La pareja avisó por WhatsApp",
-    "hace_horas": 3
-   }
+   "no_consume_suplemento_ultima_visita": false
   },
   {
    "id": "G06",
@@ -122,8 +112,7 @@
    "ultima_visita_hace_dias": 33,
    "agua_desague": false,
    "programa_social": "Juntos",
-   "no_consume_suplemento_ultima_visita": false,
-   "alerta_reportada": null
+   "no_consume_suplemento_ultima_visita": false
   },
   {
    "id": "G07",
@@ -140,8 +129,7 @@
    "ultima_visita_hace_dias": 6,
    "agua_desague": true,
    "programa_social": "Ninguno",
-   "no_consume_suplemento_ultima_visita": false,
-   "alerta_reportada": null
+   "no_consume_suplemento_ultima_visita": false
   },
   {
    "id": "G08",
@@ -158,8 +146,7 @@
    "ultima_visita_hace_dias": 33,
    "agua_desague": true,
    "programa_social": "Vaso de Leche",
-   "no_consume_suplemento_ultima_visita": false,
-   "alerta_reportada": null
+   "no_consume_suplemento_ultima_visita": false
   },
   {
    "id": "G09",
@@ -176,8 +163,7 @@
    "ultima_visita_hace_dias": 33,
    "agua_desague": true,
    "programa_social": "Juntos",
-   "no_consume_suplemento_ultima_visita": true,
-   "alerta_reportada": null
+   "no_consume_suplemento_ultima_visita": true
   },
   {
    "id": "G10",
@@ -194,8 +180,7 @@
    "ultima_visita_hace_dias": 14,
    "agua_desague": false,
    "programa_social": "Juntos",
-   "no_consume_suplemento_ultima_visita": true,
-   "alerta_reportada": null
+   "no_consume_suplemento_ultima_visita": true
   },
   {
    "id": "G11",
@@ -212,8 +197,7 @@
    "ultima_visita_hace_dias": 12,
    "agua_desague": true,
    "programa_social": "Juntos",
-   "no_consume_suplemento_ultima_visita": false,
-   "alerta_reportada": null
+   "no_consume_suplemento_ultima_visita": false
   },
   {
    "id": "G12",
@@ -230,8 +214,7 @@
    "ultima_visita_hace_dias": 20,
    "agua_desague": true,
    "programa_social": "Ninguno",
-   "no_consume_suplemento_ultima_visita": false,
-   "alerta_reportada": null
+   "no_consume_suplemento_ultima_visita": false
   },
   {
    "id": "G13",
@@ -248,8 +231,7 @@
    "ultima_visita_hace_dias": 6,
    "agua_desague": true,
    "programa_social": "Juntos",
-   "no_consume_suplemento_ultima_visita": false,
-   "alerta_reportada": null
+   "no_consume_suplemento_ultima_visita": false
   },
   {
    "id": "G14",
@@ -266,8 +248,7 @@
    "ultima_visita_hace_dias": 3,
    "agua_desague": true,
    "programa_social": "Juntos",
-   "no_consume_suplemento_ultima_visita": false,
-   "alerta_reportada": null
+   "no_consume_suplemento_ultima_visita": false
   },
   {
    "id": "G15",
@@ -284,8 +265,7 @@
    "ultima_visita_hace_dias": null,
    "agua_desague": true,
    "programa_social": "Juntos",
-   "no_consume_suplemento_ultima_visita": false,
-   "alerta_reportada": null
+   "no_consume_suplemento_ultima_visita": false
   },
   {
    "id": "G16",
@@ -302,8 +282,7 @@
    "ultima_visita_hace_dias": null,
    "agua_desague": true,
    "programa_social": "Ninguno",
-   "no_consume_suplemento_ultima_visita": true,
-   "alerta_reportada": null
+   "no_consume_suplemento_ultima_visita": true
   },
   {
    "id": "G17",
@@ -320,8 +299,7 @@
    "ultima_visita_hace_dias": 33,
    "agua_desague": true,
    "programa_social": "Vaso de Leche",
-   "no_consume_suplemento_ultima_visita": true,
-   "alerta_reportada": null
+   "no_consume_suplemento_ultima_visita": true
   },
   {
    "id": "G18",
@@ -333,19 +311,12 @@
    "direccion": "Camino al Obelisco, Mz. F Lt. 23",
    "lat": -13.045548,
    "lon": -74.134247,
-   "dias_gestacion_hoy": 215,
+   "dias_gestacion_hoy": 89,
    "cumplimiento": 0.4,
    "ultima_visita_hace_dias": 20,
    "agua_desague": true,
    "programa_social": "Vaso de Leche",
-   "no_consume_suplemento_ultima_visita": false,
-   "alerta_reportada": {
-    "signos": [
-     "bebe_no_se_mueve"
-    ],
-    "fuente": "La suegra llamó al agente",
-    "hace_horas": 5
-   }
+   "no_consume_suplemento_ultima_visita": false
   },
   {
    "id": "G19",
@@ -362,8 +333,7 @@
    "ultima_visita_hace_dias": null,
    "agua_desague": true,
    "programa_social": "Juntos",
-   "no_consume_suplemento_ultima_visita": false,
-   "alerta_reportada": null
+   "no_consume_suplemento_ultima_visita": false
   },
   {
    "id": "G20",
@@ -380,8 +350,7 @@
    "ultima_visita_hace_dias": 17,
    "agua_desague": true,
    "programa_social": "Juntos",
-   "no_consume_suplemento_ultima_visita": true,
-   "alerta_reportada": null
+   "no_consume_suplemento_ultima_visita": true
   },
   {
    "id": "G21",
@@ -398,8 +367,7 @@
    "ultima_visita_hace_dias": 6,
    "agua_desague": true,
    "programa_social": "Juntos",
-   "no_consume_suplemento_ultima_visita": false,
-   "alerta_reportada": null
+   "no_consume_suplemento_ultima_visita": false
   },
   {
    "id": "G22",
@@ -416,8 +384,7 @@
    "ultima_visita_hace_dias": null,
    "agua_desague": true,
    "programa_social": "Juntos",
-   "no_consume_suplemento_ultima_visita": false,
-   "alerta_reportada": null
+   "no_consume_suplemento_ultima_visita": false
   },
   {
    "id": "G23",
@@ -434,8 +401,7 @@
    "ultima_visita_hace_dias": 14,
    "agua_desague": true,
    "programa_social": "Ninguno",
-   "no_consume_suplemento_ultima_visita": false,
-   "alerta_reportada": null
+   "no_consume_suplemento_ultima_visita": false
   },
   {
    "id": "G24",
@@ -452,8 +418,7 @@
    "ultima_visita_hace_dias": 17,
    "agua_desague": true,
    "programa_social": "Ninguno",
-   "no_consume_suplemento_ultima_visita": false,
-   "alerta_reportada": null
+   "no_consume_suplemento_ultima_visita": false
   },
   {
    "id": "G25",
@@ -470,8 +435,7 @@
    "ultima_visita_hace_dias": 14,
    "agua_desague": true,
    "programa_social": "Ninguno",
-   "no_consume_suplemento_ultima_visita": false,
-   "alerta_reportada": null
+   "no_consume_suplemento_ultima_visita": false
   },
   {
    "id": "G26",
@@ -488,8 +452,7 @@
    "ultima_visita_hace_dias": null,
    "agua_desague": true,
    "programa_social": "Ninguno",
-   "no_consume_suplemento_ultima_visita": false,
-   "alerta_reportada": null
+   "no_consume_suplemento_ultima_visita": false
   }
  ]
 }

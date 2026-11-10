@@ -15,7 +15,7 @@ license: other
 
 *Puriq* significa "el que camina" en quechua: el agente comunitario que recorre su sector casa por casa. Esta es la versión **Lite**, nacida del mockup *Creciendo Juntos*.
 
-> **Ayudamos a los agentes comunitarios de salud a no perder a ninguna gestante: la app arma la ruta del día según la urgencia y convierte la conversación de la visita en la Ficha 3 llena, con los mensajes que debe darle.**
+> **Ayudamos a los agentes comunitarios de salud a no perder a ninguna gestante: la app arma la ruta del día según los servicios pendientes, convierte la conversación de la visita en la Ficha 3 llena y, si detecta signos de alarma, deriva sola al establecimiento por WhatsApp.**
 
 Proyecto final de la Diplomatura en Ciencia de Datos para las Ciencias Sociales y la Gestión Pública (Q-Lab PUCP, 2026) · [issue #204](https://github.com/d2cml-ai/Data-Science-Python/issues/204)
 
@@ -30,13 +30,13 @@ Proyecto final de la Diplomatura en Ciencia de Datos para las Ciencias Sociales 
 
 ## 1. One-liner
 
-Hacemos **la ruta y el registro de visitas domiciliarias** para **los agentes comunitarios que acompañan gestantes** mediante **priorización por urgencia, mapas y voz a texto con IA**.
+Hacemos **la ruta y el registro de visitas domiciliarias** para **los agentes comunitarios que acompañan gestantes** mediante **alertas de servicios, mapas y voz a texto con IA**.
 
 ## 2. Founder
 
 **Víctor Guardia Fiestas** · `[EDITAR: foto en docs/founder.jpg]`
 
-`[EDITAR: una línea sobre ti.]` Trabajé en el diagnóstico y diseño de la vigilancia comunitaria del programa *Creciendo Juntos*, donde vi de cerca cómo los agentes comunitarios llenan fichas en papel, arman su ruta de memoria y se enteran tarde de las alertas.
+`[EDITAR: una línea sobre ti.]` Trabajé en el diagnóstico y diseño de la vigilancia comunitaria del programa *Creciendo Juntos*, donde vi de cerca cómo los agentes comunitarios llenan fichas en papel, arman su ruta de memoria y se enteran tarde de los servicios vencidos.
 
 Cómo cubro cada frente con agentes de IA:
 - **Producto:** defino el problema, las reglas (norma técnica) y el flujo; Claude Code me ayuda a bajarlo a historias concretas.
@@ -53,19 +53,19 @@ Cómo cubro cada frente con agentes de IA:
 - Llenar a mano la **Ficha 3** (Formato N.° 03) en cada visita: suplementos, signos de alarma, hábitos, mensajes por trimestre y motivos de referencia.
 - Entregar las fichas en papel al responsable de promoción de la salud del establecimiento antes de fin de mes, para que alguien las digite en el aplicativo.
 
-**Cómo lo resuelven hoy:** papel, memoria y WhatsApp. La ruta se arma "por cercanía" y no por urgencia; las fichas se pasan días después y con errores; las alertas que avisa la familia llegan por chat y se pueden perder entre mensajes.
+**Cómo lo resuelven hoy:** papel, memoria y WhatsApp. La ruta se arma "por cercanía" y no por urgencia; las fichas se pasan días después y con errores; cuando el agente detecta un signo de alarma, avisar al establecimiento depende de que tenga saldo y el número a la mano.
 
-**Cuánto cuesta:** `[EDITAR con lo que te dijeron tus 3 usuarios: horas al mes en llenar y pasar fichas, visitas vencidas, alertas tardías.]`
+**Cuánto cuesta:** `[EDITAR con lo que te dijeron tus 3 usuarios: horas al mes en llenar y pasar fichas, visitas vencidas, servicios que se pierden, derivaciones tardías.]`
 
 **Evidencia:** notas de 3 conversaciones con usuarios potenciales en [`docs/research/`](docs/research/).
 
 ## 4. Solución e insight
 
 **Qué construimos** (flujo principal, de punta a punta):
-1. **Inicio:** las alertas del día (lo que avisó la familia) y el resumen de las gestantes con el semáforo de servicios.
-2. **Ruta de hoy:** la app puntúa a cada gestante (alertas, visita vencida, servicios pendientes, no toma suplementos, cerca del parto, adolescente). Arma la ruta para el tiempo disponible: **urgentes primero**, luego las que dan más prioridad por minuto de camino, con el orden optimizado (2-opt). Muestra el **mapa** y la hora estimada de llegada a cada casa.
+1. **Inicio:** las **alertas de servicios** (controles, exámenes o suplementos que vencieron pero aún se recuperan hasta el parto), los recordatorios por vencer y el semáforo de las gestantes. El agente no brinda servicios: hace seguimiento y motiva a la gestante a ir al establecimiento.
+2. **Ruta de hoy:** la app puntúa a cada gestante (alertas de servicios, recordatorios por vencer, visita vencida según la norma, seguimiento de una derivación, no toma suplementos, cerca del parto, adolescente). Arma la ruta para el tiempo disponible eligiendo a las que dan más prioridad por minuto de camino, con el orden optimizado (2-opt). Muestra el **mapa** y la hora estimada de llegada a cada casa.
 3. **Ficha 3 con voz:** al abrir la ficha aparece **"Grabar visita"**. El agente conversa con normalidad; Whisper transcribe y la IA llena la parte C: **consumo de suplementos, por qué no los consume, signos de alarma y hábitos**, con la frase que respalda cada respuesta. El agente revisa y corrige.
-4. **Mensajes para la gestante:** con lo encontrado y el trimestre, la app elige los **mensajes de orientación** (parte D) y los **motivos de referencia**. Si hay signos de alarma, pide **referir hoy** al establecimiento. La IA los redacta en palabras sencillas para decirlos en la visita.
+4. **Mensajes para la gestante:** con lo encontrado y el trimestre, la app elige los **mensajes de orientación** (parte D) y los **motivos de referencia**. Si la ficha registra **signos de alarma**, la app **deriva automáticamente al establecimiento por WhatsApp** con los datos de la gestante y los signos (en la versión Lite el envío se simula y se ofrece el enlace de WhatsApp; la completa usa WhatsApp Business). La IA los redacta en palabras sencillas para decirlos en la visita.
 5. **Guardar:** la visita queda registrada y la ruta de mañana se recalcula.
 
 **Insight:** el cuello de botella no es la "información de salud", sino **la jornada del agente**. Si la app decide *a quién ver primero* y *qué decirle*, el agente gasta su tiempo en la conversación y no en el papel. Además, **la IA no elige los mensajes**: los elige una regla auditable basada en la norma, y la IA solo los redacta. Así el contenido es seguro y verificable por el establecimiento.
@@ -81,7 +81,7 @@ Cómo cubro cada frente con agentes de IA:
 
 **URL:** `[EDITAR]` · **Plan B:** video en `[EDITAR]`.
 
-| Inicio y alertas | Ruta y mapa | Mensajes tras la visita |
+| Inicio y alertas de servicios | Ruta y mapa | Derivación automática por WhatsApp |
 |---|---|---|
 | ![Inicio](docs/capturas/1-inicio.jpg) | ![Ruta](docs/capturas/2-ruta-mapa.jpg) | ![Visita](docs/capturas/3-visita-mensajes.jpg) |
 

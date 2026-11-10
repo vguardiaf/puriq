@@ -18,7 +18,8 @@ OUT = Path(__file__).resolve().parents[1] / "data" / "quinua_gestantes.json"
 
 # Plaza de Quinua (aprox.) y punto de partida del agente: el puesto de salud.
 PLAZA = (-13.0530, -74.1385)
-INICIO = {"nombre": "Puesto de Salud Quinua", "lat": -13.0524, "lon": -74.1392}
+INICIO = {"nombre": "Puesto de Salud Quinua", "lat": -13.0524, "lon": -74.1392,
+          "whatsapp": "51900000000", "contacto": "Obstetra de guardia (número ficticio)"}
 
 # Sectores inventados: (nombre, desplazamiento lat, desplazamiento lon, radio en metros)
 SECTORES = [
@@ -79,16 +80,7 @@ def main() -> None:
             "agua_desague": rng.random() < 0.8,
             "programa_social": rng.choice(["Juntos", "Vaso de Leche", "Ninguno", "Juntos", "Ninguno"]),
             "no_consume_suplemento_ultima_visita": rng.random() < 0.25,
-            "alerta_reportada": None,
         })
-
-    # Dos alertas reportadas por la familia, para que la ruta las priorice.
-    gestantes[4]["alerta_reportada"] = {"signos": ["hinchazon", "vision_cefalea"],
-                                        "fuente": "La pareja avisó por WhatsApp", "hace_horas": 3}
-    gestantes[17]["alerta_reportada"] = {"signos": ["bebe_no_se_mueve"],
-                                         "fuente": "La suegra llamó al agente", "hace_horas": 5}
-    for idx in (4, 17):
-        gestantes[idx]["dias_gestacion_hoy"] = max(gestantes[idx]["dias_gestacion_hoy"], 215)
 
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps({

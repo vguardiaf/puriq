@@ -1,11 +1,14 @@
-"""Ruta de visitas del día: prioriza por urgencia y optimiza distancia y tiempo.
+"""Ruta de visitas del día: prioriza por alertas de servicios y optimiza distancia y tiempo.
+
+El agente comunitario no brinda servicios: hace seguimiento. Por eso las alertas son de
+SERVICIOS (controles, exámenes, suplementos pendientes) y de la propia visita (vencida según
+la norma). Los signos de alarma no se programan: se detectan en la visita y se derivan al EESS.
 
 1. Puntaje de prioridad por gestante, con sus razones (para que el agente entienda el porqué).
 2. Matriz de distancias con GeoPandas: los puntos se proyectan a UTM 18S (EPSG:32718) para
    medir en metros; se aplica un factor de desvío por calles y cuestas.
-3. Selección y orden (problema tipo "orienteering"): las urgentes van primero, por cercanía;
-   luego se insertan las demás por puntaje / minutos extra hasta llenar la jornada, y el
-   orden se mejora con 2-opt.
+3. Selección y orden (problema tipo "orienteering"): se insertan las gestantes por
+   puntaje / minutos extra hasta llenar la jornada, y el orden se mejora con 2-opt.
 """
 from __future__ import annotations
 
@@ -15,8 +18,6 @@ from datetime import datetime, timedelta
 
 import geopandas as gpd
 from shapely.geometry import LineString, Point
-
-from .ficha3 import SIGNOS_ALARMA
 
 CRS_METROS = "EPSG:32718"  # UTM zona 18S: Ayacucho
 DESVIO = 1.3               # las calles no son línea recta y Quinua tiene cuestas
@@ -28,45 +29,62 @@ MIN_MARGEN = 5             # saludo, ubicar la casa, registrar
 @dataclass
 class Prioridad:
     puntaje: float
-    nivel: str          # urgente | vencida | toca | recomendada | al_dia
+    nivel: str          # alerta | seguimiento | vencida | toca | recomendada | al_dia
     razones: list[str]
+
+
+NIVELES = ("alerta", "seguimiento", "vencida", "toca")
+
+
+def _dm(iso: str) -> str:
+    return f"{int(iso[8:10])}/{int(iso[5:7])}"
 
 
 def prioridad(r: dict) -> Prioridad:
     """r = resumen de la gestante (Store.resumen)."""
-    p, razones, nivel = 0.0, [], "al_dia"
-    alerta = r.get("alerta")
-    if alerta:
-        p += 100
-        signos = ", ".join(SIGNOS_ALARMA.get(s, s).lower() for s in alerta["signos"])
-        razones.append(f"Alerta: {signos}. {alerta['fuente']}")
-        nivel = "urgente"
-    if r.get("urgente_ultima_visita"):
-        p += 60
-        razones.append("Tuvo signos de alarma en la última visita: hacer seguimiento")
-        nivel = "urgente"
+    p, razones, niveles = 0.0, [], set()
+    # Alertas de servicio: pendientes (vencidos) que aún se recuperan hasta el parto.
+    alertas = r.get("alertas", [])
+    if alertas:
+        p += 25 * len(alertas)
+        nombres = ", ".join(a["nombre"] for a in alertas)
+        razones.append(f"Alerta de servicio: {nombres}. Venció su fecha; aún se puede hacer hasta el parto ({_dm(alertas[0]['limite'])})")
+        if r.get("dias_al_parto", 999) <= 30:
+            p += 15
+            razones.append(f"Faltan {r['dias_al_parto']} días para el parto: queda poco tiempo para recuperarlo")
+        niveles.add("alerta")
+    # Recordatorios: servicios en fecha; suben si están por vencer.
+    recs = r.get("recordatorios", [])
+    if recs:
+        p += 5 * len(recs)
+        pronto = [x for x in recs if x["dias_para_vencer"] <= 7]
+        if pronto:
+            p += 10 * len(pronto)
+            razones.append("Recordatorio: " + "; ".join(
+                f"{x['nombre']} vence {'hoy' if x['dias_para_vencer'] == 0 else 'en ' + str(x['dias_para_vencer']) + ' día(s)'}"
+                for x in pronto))
+        else:
+            razones.append(f"Recordatorio: {len(recs)} servicio(s) en fecha")
+    # Seguimiento de una derivación hecha en la visita anterior.
+    if r.get("derivada_ultima_visita"):
+        p += 40
+        razones.append("Se derivó al EESS en la última visita: verificar que fue atendida")
+        niveles.add("seguimiento")
     d = r.get("dias_desde_visita")
     if d is None:
         p += 45
         razones.append("Todavía no recibe ninguna visita")
-        nivel = nivel if nivel == "urgente" else "vencida"
+        niveles.add("vencida")
     elif d > 15:
         p += 40 + min(d - 15, 15)
         razones.append(f"Visita vencida: la última fue hace {d} días (la norma pide cada 13 a 15)")
-        nivel = nivel if nivel == "urgente" else "vencida"
+        niveles.add("vencida")
     elif d >= 13:
         p += 30
         razones.append(f"Le toca visita: la última fue hace {d} días")
-        nivel = nivel if nivel in ("urgente", "vencida") else "toca"
+        niveles.add("toca")
     elif d >= 10:
         p += 8
-    c = r["conteo"]
-    if c.get("amar"):
-        p += 8 * c["amar"]
-        razones.append(f"{c['amar']} servicio(s) pendiente(s) que aún se pueden recuperar")
-    if c.get("verde"):
-        p += 5 * c["verde"]
-        razones.append(f"{c['verde']} servicio(s) en fecha: recordárselos")
     if r.get("no_consume_suplemento"):
         p += 12
         razones.append("No estaba tomando sus suplementos")
@@ -78,8 +96,7 @@ def prioridad(r: dict) -> Prioridad:
     if r["edad"] < 18:
         p += 8
         razones.append("Gestante adolescente")
-    if nivel == "al_dia" and p >= 15:
-        nivel = "recomendada"
+    nivel = next((n for n in NIVELES if n in niveles), "recomendada" if p >= 15 else "al_dia")
     return Prioridad(round(p, 1), nivel, razones)
 
 
@@ -97,7 +114,7 @@ def _costo(orden: list[int], M: list[list[float]]) -> float:
 
 
 def _two_opt(orden: list[int], M: list[list[float]], fijo: int) -> list[int]:
-    """Mejora un camino abierto; los primeros `fijo` nodos (inicio + urgentes) no se mueven."""
+    """Mejora un camino abierto; los primeros `fijo` nodos (el punto de partida) no se mueven."""
     mejor = orden[:]
     mejoro = True
     while mejoro:
@@ -121,20 +138,10 @@ def planificar(resumenes: list[dict], inicio: dict, jornada_min: int = 240, hora
     def tiempo(orden: list[int]) -> float:
         return _costo(orden, M) + visita * (len(orden) - 1)
 
-    # 1) las urgentes primero, por cercanía
-    orden = [0]
-    urg = [idx[r["id"]] for r in cand if prios[r["id"]].nivel == "urgente"]
-    while urg:
-        sig = min(urg, key=lambda k: M[orden[-1]][k])
-        if tiempo(orden + [sig]) > jornada_min and len(orden) > 1:
-            break
-        orden.append(sig)
-        urg.remove(sig)
-    fijo = len(orden)
-
-    # 2) inserción por puntaje / minutos extra, mientras quepa en la jornada
+    # Inserción por puntaje / minutos extra, mientras quepa en la jornada (sale del puesto de salud).
+    orden, fijo = [0], 1
     puntaje = {idx[r["id"]]: prios[r["id"]].puntaje for r in cand}
-    pend = [idx[r["id"]] for r in cand if idx[r["id"]] not in orden and prios[r["id"]].nivel != "urgente"]
+    pend = [idx[r["id"]] for r in cand]
     while pend:
         mejor = None
         base = tiempo(orden)

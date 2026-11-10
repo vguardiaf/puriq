@@ -27,6 +27,7 @@ class Store:
         self.meta = {k: raw[k] for k in ("localidad", "distrito", "provincia", "region")}
         self.inicio = raw["inicio"]
         self.gestantes: dict[str, dict] = {}
+        self.derivaciones: list[dict] = []
         for g in raw["gestantes"]:
             g = dict(g)
             g["fur"] = self.hoy - timedelta(days=g["dias_gestacion_hoy"])
@@ -73,7 +74,12 @@ class Store:
         svcs = self.servicios(g)
         conteo = {k: sum(1 for s in svcs if s["estado"] == k) for k in ("rojo", "amar", "verde", "rec", "fut")}
         semana, mes = rules.semana_y_mes(g["fur"], self.hoy)
-        alerta = g.get("alerta_reportada")
+        fpp = rules.fecha_probable_parto(g["fur"])
+        # Alertas = servicios pendientes que aún se recuperan (ámbar); recordatorios = servicios en fecha (verde).
+        alertas = [{"id": s["id"], "nombre": s["nombre"], "limite": s["limite"]} for s in svcs if s["estado"] == "amar"]
+        recordatorios = [{"id": s["id"], "nombre": s["nombre"], "fin": s["fin"],
+                          "dias_para_vencer": (date.fromisoformat(s["fin"]) - self.hoy).days}
+                         for s in svcs if s["estado"] == "verde"]
         ultima = next((v for v in reversed(g["visitas"]) if v.get("origen") == "app"), None)
         return {
             "id": g["id"], "nombre": g["nombre"], "edad": g["edad"], "sector": g["sector"],
@@ -84,7 +90,9 @@ class Store:
             "semana": semana, "mes": mes, "trimestre": rules.trimestre(semana),
             "conteo": conteo, "bucket": rules.bucket(conteo),
             "dias_desde_visita": self.dias_desde_visita(g),
-            "alerta": alerta, "urgente_ultima_visita": bool(ultima and ultima.get("urgente")),
+            "dias_al_parto": (fpp - self.hoy).days,
+            "alertas": alertas, "recordatorios": recordatorios,
+            "derivada_ultima_visita": bool(ultima and ultima.get("derivada")),
             "no_consume_suplemento": g["no_consume_suplemento_ultima_visita"],
             "visitas": len([v for v in g["visitas"]]),
         }
@@ -115,9 +123,20 @@ class Store:
             sup = visita.get("campos", {}).get("suplementos", {})
             if sup:
                 g["no_consume_suplemento_ultima_visita"] = any(v == "no" for v in sup.values())
-            # La alerta reportada queda atendida con la visita (si persisten signos, la visita queda urgente).
-            g["alerta_reportada"] = None
         return self.detalle(gid)
+
+    def registrar_derivacion(self, gid: str, derivacion: dict) -> dict:
+        """Guarda la derivación al EESS. Una por gestante y día: si se repite, devuelve la ya enviada."""
+        with _lock:
+            hoy = self.hoy.isoformat()
+            previa = next((d for d in self.derivaciones if d["gestante_id"] == gid and d["fecha"] == hoy), None)
+            if previa:
+                previa.update({k: v for k, v in derivacion.items() if k in ("signos", "texto")})
+                return previa
+            d = {**derivacion, "gestante_id": gid, "fecha": hoy,
+                 "enviada_en": datetime.now().strftime("%H:%M"), "estado": "enviada"}
+            self.derivaciones.append(d)
+            return d
 
 
 STORE = Store()

@@ -60,11 +60,12 @@ def _resumenes():
     return [STORE.resumen(g) for g in STORE.gestantes.values()]
 
 
-def test_ruta_urgentes_primero_y_dentro_de_la_jornada():
-    p = planificar(_resumenes(), STORE.inicio, jornada_min=240)
-    niveles = [x["nivel"] for x in p["paradas"]]
-    n_urg = niveles.count("urgente")
-    assert n_urg >= 1 and all(n == "urgente" for n in niveles[:n_urg])
+def test_ruta_prioriza_alertas_de_servicio_y_cabe_en_la_jornada():
+    rs = _resumenes()
+    p = planificar(rs, STORE.inicio, jornada_min=240)
+    top = max(rs, key=lambda r: prioridad(r).puntaje)
+    assert top["id"] in {x["id"] for x in p["paradas"]}
+    assert any(x["nivel"] == "alerta" for x in p["paradas"])
     assert p["totales"]["min_total"] <= 240
     assert p["totales"]["km"] <= p["totales"]["km_sin_optimizar"] + 1e-6
 
@@ -75,10 +76,13 @@ def test_mas_tiempo_permite_mas_visitas():
     assert larga >= corta
 
 
-def test_prioridad_alerta_es_urgente():
-    r = {"alerta": {"signos": ["sangrado"], "fuente": "Familia"}, "dias_desde_visita": 3,
-         "conteo": {}, "semana": 20, "trimestre": 2, "edad": 25}
-    assert prioridad(r).nivel == "urgente"
+def test_alertas_son_de_servicios():
+    base = {"dias_desde_visita": 3, "conteo": {}, "semana": 20, "trimestre": 2, "edad": 25, "dias_al_parto": 140,
+            "recordatorios": []}
+    con_alerta = {**base, "alertas": [{"id": "vih", "nombre": "Examen de VIH", "limite": "2027-03-01"}]}
+    assert prioridad(con_alerta).nivel == "alerta"
+    assert prioridad({**base, "alertas": []}).nivel == "al_dia"
+    assert prioridad({**base, "alertas": [], "derivada_ultima_visita": True}).nivel == "seguimiento"
 
 
 # ─────────────────────────────── API de punta a punta (sin audio)
@@ -86,7 +90,7 @@ def test_flujo_visita_por_api():
     STORE.reiniciar()
     g = client.get("/api/gestantes").json()
     assert len(g) == 26
-    gid = next(x["id"] for x in g if x["alerta"])
+    gid = next(x["id"] for x in g if x["alertas"])
     texto = open("data/visita_ejemplo.txt", encoding="utf-8").read()
     campos = client.post("/api/visita/extraer", json={"gestante_id": gid, "texto": texto}).json()
     assert campos["signos"]["hinchazon"]["valor"] == "si"
@@ -94,9 +98,14 @@ def test_flujo_visita_por_api():
     valores["motivos"] = campos["motivos"]
     m = client.post("/api/visita/mensajes", json={"gestante_id": gid, "campos": valores, "transcripcion": texto}).json()
     assert m["urgente"] and m["mensajes"]
+    # Signos de alarma -> derivación automática al EESS por WhatsApp
+    der = m["derivacion"]
+    assert der and der["enlace"].startswith("https://wa.me/") and "Hinchazón" in der["texto"]
+    otra = client.post("/api/visita/mensajes", json={"gestante_id": gid, "campos": valores}).json()["derivacion"]
+    assert otra["enviada_en"] == der["enviada_en"] and len(STORE.derivaciones) == 1  # no se duplica
     d = client.post("/api/visita/guardar", json={"gestante_id": gid, "campos": valores, "urgente": True,
                                                  "referencias": m["referencias"], "mensajes": m["mensajes"]}).json()
-    assert d["alerta"] is None and d["dias_desde_visita"] == 0 and d["urgente_ultima_visita"]
+    assert d["dias_desde_visita"] == 0 and d["derivada_ultima_visita"] and d["prioridad"]["nivel"] in ("alerta", "seguimiento")
     STORE.reiniciar()
 
 
