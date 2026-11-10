@@ -47,11 +47,11 @@ def prioridad(r: dict) -> Prioridad:
     alertas = r.get("alertas", [])
     if alertas:
         p += 25 * len(alertas)
-        nombres = ", ".join(a["nombre"] for a in alertas)
-        razones.append(f"Alerta de servicio: {nombres}. Venció su fecha; aún se puede hacer hasta el parto ({_dm(alertas[0]['limite'])})")
+        n = len(alertas)
+        razones.append(f"{n} servicio{'s' if n > 1 else ''} pendiente{'s' if n > 1 else ''}")
         if r.get("dias_al_parto", 999) <= 30:
             p += 15
-            razones.append(f"Faltan {r['dias_al_parto']} días para el parto: queda poco tiempo para recuperarlo")
+            razones.append(f"Parto en {r['dias_al_parto']} días")
         niveles.add("alerta")
     # Recordatorios: servicios en fecha; suben si están por vencer.
     recs = r.get("recordatorios", [])
@@ -60,42 +60,39 @@ def prioridad(r: dict) -> Prioridad:
         pronto = [x for x in recs if x["dias_para_vencer"] <= 7]
         if pronto:
             p += 10 * len(pronto)
-            razones.append("Recordatorio: " + "; ".join(
-                f"{x['nombre']} vence {'hoy' if x['dias_para_vencer'] == 0 else 'en ' + str(x['dias_para_vencer']) + ' día(s)'}"
-                for x in pronto))
-        else:
-            razones.append(f"Recordatorio: {len(recs)} servicio(s) en fecha")
+            k = len(pronto)
+            razones.append(f"{k} servicio{'s' if k > 1 else ''} vence{'n' if k > 1 else ''} esta semana")
     # Seguimiento de una derivación hecha en la visita anterior.
     if r.get("derivada_ultima_visita"):
         p += 40
-        razones.append("Se derivó al EESS en la última visita: verificar que fue atendida")
+        razones.append("Verificar si fue al EESS")
         niveles.add("seguimiento")
     d = r.get("dias_desde_visita")
     if d is None:
         p += 45
-        razones.append("Todavía no recibe ninguna visita")
+        razones.append("Sin visitas")
         niveles.add("vencida")
     elif d > 15:
         p += 40 + min(d - 15, 15)
-        razones.append(f"Visita vencida: la última fue hace {d} días (la norma pide cada 13 a 15)")
+        razones.append(f"Visita vencida ({d} días)")
         niveles.add("vencida")
     elif d >= 13:
         p += 30
-        razones.append(f"Le toca visita: la última fue hace {d} días")
+        razones.append(f"Le toca visita ({d} días)")
         niveles.add("toca")
     elif d >= 10:
         p += 8
     if r.get("no_consume_suplemento"):
         p += 12
-        razones.append("No estaba tomando sus suplementos")
+        razones.append("No toma suplementos")
     if r["semana"] >= 37:
         p += 15
-        razones.append(f"Semana {r['semana']}: el parto está cerca")
+        razones.append(f"Semana {r['semana']}: parto cerca")
     elif r["trimestre"] == 3:
         p += 8
     if r["edad"] < 18:
         p += 8
-        razones.append("Gestante adolescente")
+        razones.append("Adolescente")
     nivel = next((n for n in NIVELES if n in niveles), "recomendada" if p >= 15 else "al_dia")
     return Prioridad(round(p, 1), nivel, razones)
 

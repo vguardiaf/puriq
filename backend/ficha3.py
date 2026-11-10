@@ -158,7 +158,29 @@ def texto_derivacion(r: dict, signos: list[str], agente: str, celular_agente: st
     ])
 
 
+# Plan de parto (III trimestre): lo que debe tener la ficha de plan de parto de la gestante.
+PLAN_PARTO = {
+    "lugar": "Dónde dará a luz",
+    "quien": "Quién atenderá el parto",
+    "posicion": "Posición para dar a luz",
+    "transporte": "Cómo irá al establecimiento",
+    "tiempo": "Cuánto tarda en llegar",
+    "aviso": "Quién avisará al personal de salud",
+    "cuidado": "Quién cuidará hijos, casa y animales",
+    "acompanantes": "Quién la acompañará",
+    "sangre": "Donante de sangre",
+    "casa_espera": "Casa de espera: acepta y sabe cuándo ir",
+    "llevar": "Qué llevará para el parto",
+    "telefono": "Teléfono del establecimiento",
+    "firmas": "Firmas: gestante, familiar y personal",
+}
+
+
 def catalogo() -> dict:
-    """Catálogo que el frontend usa para dibujar la ficha."""
+    """Catálogo que el frontend usa para dibujar la ficha y la ayuda."""
+    from .rules import SERVICIOS
+
+    paquete = [{"id": s.id, "nombre": s.nombre, "desde": s.mes_desde, "hasta": s.mes_hasta,
+                "recupera": s.recupera_hasta_parto} for s in SERVICIOS]
     return {"suplementos": SUPLEMENTOS, "motivos": MOTIVOS_NO_CONSUMO,
-            "signos": SIGNOS_ALARMA, "habitos": HABITOS}
+            "signos": SIGNOS_ALARMA, "habitos": HABITOS, "plan_parto": PLAN_PARTO, "paquete": paquete}

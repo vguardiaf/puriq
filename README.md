@@ -62,11 +62,14 @@ Cómo cubro cada frente con agentes de IA:
 ## 4. Solución e insight
 
 **Qué construimos** (flujo principal, de punta a punta):
-1. **Inicio:** las **alertas de servicios** (controles, exámenes o suplementos que vencieron pero aún se recuperan hasta el parto), los recordatorios por vencer y el semáforo de las gestantes. El agente no brinda servicios: hace seguimiento y motiva a la gestante a ir al establecimiento.
+1. **Inicio (sin scroll):** cuántas gestantes tiene el agente y cómo están (con alertas, con recordatorios, al día: los grupos no se cruzan y suman el total), cuántos servicios ya les tocaban (recibidos, en fecha, pendientes, perdidos), las **alertas de servicios** (controles, exámenes o suplementos que vencieron pero aún se recuperan hasta el parto), los recordatorios por vencer y el semáforo de las gestantes. El agente no brinda servicios: hace seguimiento y motiva a la gestante a ir al establecimiento.
 2. **Ruta de hoy:** la app puntúa a cada gestante (alertas de servicios, recordatorios por vencer, visita vencida según la norma, seguimiento de una derivación, no toma suplementos, cerca del parto, adolescente). Arma la ruta para el tiempo disponible eligiendo a las que dan más prioridad por minuto de camino, con el orden optimizado (2-opt). Muestra el **mapa** y la hora estimada de llegada a cada casa.
 3. **Ficha 3 con voz:** al abrir la ficha aparece **"Grabar visita"**. El agente conversa con normalidad; Whisper transcribe y la IA llena la parte C: **consumo de suplementos, por qué no los consume, signos de alarma y hábitos**, con la frase que respalda cada respuesta. El agente revisa y corrige.
 4. **Mensajes para la gestante:** con lo encontrado y el trimestre, la app elige los **mensajes de orientación** (parte D) y los **motivos de referencia**. Si la ficha registra **signos de alarma**, la app **deriva automáticamente al establecimiento por WhatsApp** con los datos de la gestante y los signos (en la versión Lite el envío se simula y se ofrece el enlace de WhatsApp; la completa usa WhatsApp Business). La IA los redacta en palabras sencillas para decirlos en la visita.
-5. **Guardar:** la visita queda registrada y la ruta de mañana se recalcula.
+5. **Plan de parto (III trimestre):** en la ficha de la gestante, el agente verifica con una lista de 13 puntos (lugar, transporte, quién avisa, donante de sangre, casa de espera, etc.) que el plan esté completo; completo = servicio recibido.
+6. **Guardar:** la visita queda registrada y la ruta de mañana se recalcula.
+
+**Diseño para el usuario real:** agentes de zonas rurales, muchas veces con secundaria incompleta. Por eso: poca letra, un ícono por concepto, colores con significado fijo, botones grandes y pantallas casi sin scroll. La explicación está en Ayuda, en cajas que se abren.
 
 **Insight:** el cuello de botella no es la "información de salud", sino **la jornada del agente**. Si la app decide *a quién ver primero* y *qué decirle*, el agente gasta su tiempo en la conversación y no en el papel. Además, **la IA no elige los mensajes**: los elige una regla auditable basada en la norma, y la IA solo los redacta. Así el contenido es seguro y verificable por el establecimiento.
 

@@ -45,14 +45,14 @@ main{flex:1;padding-block:16px 28px;display:flex;flex-direction:column;gap:16px;
 .st-rojo,.st-vencida{--x:var(--red);--x-bg:var(--red-bg);--x-ink:var(--red-ink)}
 .st-amar,.st-alerta{--x:var(--amb);--x-bg:var(--amb-bg);--x-ink:var(--amb-ink)}
 .st-seguimiento{--x:var(--violet);--x-bg:var(--violet-bg);--x-ink:var(--violet-ink)}
-.st-verde,.st-ok,.st-toca{--x:var(--grn);--x-bg:var(--grn-bg);--x-ink:var(--grn-ink)}
-.st-rec{--x:var(--done);--x-bg:var(--done-bg);--x-ink:var(--done-ink)}
+.st-verde,.st-toca{--x:var(--grn);--x-bg:var(--grn-bg);--x-ink:var(--grn-ink)}
+.st-rec,.st-ok{--x:var(--done);--x-bg:var(--done-bg);--x-ink:var(--done-ink)}
 .st-fut,.st-al_dia{--x:var(--fut);--x-bg:var(--fut-bg);--x-ink:var(--fut-ink)}
 .st-recomendada{--x:var(--accent);--x-bg:var(--accent-soft);--x-ink:var(--accent)}
 .st-ia{--x:var(--violet);--x-bg:var(--violet-bg);--x-ink:var(--violet-ink)}
 
 /* bloques */
-.greet h2{margin:0;font-size:27px;line-height:1.1}
+.greet h2{margin:0;font-size:24px;line-height:1.1}
 .greet p{margin:4px 0 0;color:var(--muted);font-size:16px}
 .card{border:1px solid var(--line);border-radius:22px;padding:16px;background:var(--surface);box-shadow:var(--shadow);display:flex;flex-direction:column;gap:12px}
 .card h2{margin:0;font-size:20px;line-height:1.2}
@@ -79,7 +79,7 @@ main{flex:1;padding-block:16px 28px;display:flex;flex-direction:column;gap:16px;
 
 /* mosaicos */
 .tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
-.tile{display:flex;flex-direction:column;align-items:flex-start;gap:6px;text-align:left;border:1.5px solid var(--x);background:var(--x-bg);color:var(--x-ink);border-radius:18px;padding:12px 10px;min-height:128px;min-width:0}
+.tile{display:flex;flex-direction:column;align-items:flex-start;gap:6px;text-align:left;border:1.5px solid var(--x);background:var(--x-bg);color:var(--x-ink);border-radius:18px;padding:10px;min-height:104px;min-width:0}
 .tile .ti{width:32px;height:32px;border-radius:50%;background:var(--surface);color:var(--x);display:grid;place-items:center;border:1.5px solid var(--x)}
 .tile .ti .ic{width:18px;height:18px}
 .tile .tn{font-size:38px;font-weight:700;line-height:1;color:var(--x);font-variant-numeric:tabular-nums}
@@ -229,3 +229,35 @@ textarea{min-height:110px;resize:vertical}
 .wa-time{display:block;text-align:right;font-size:12px;color:#5B6B60;margin-top:4px}
 .foot{font-size:13px;color:var(--muted);text-align:center;margin:4px 0 0}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+.bar.fat{height:14px}
+.keys{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:6px 12px;font-size:15px}
+.keys li{display:flex;align-items:center;gap:6px;color:var(--x-ink)}
+.keys .ic{color:var(--x);width:18px;height:18px}
+.keys b{font-variant-numeric:tabular-nums}
+.fold>summary{list-style:none;display:flex;align-items:center;gap:10px;cursor:pointer;min-height:44px}
+.fold>summary::-webkit-details-marker{display:none}
+.fold>summary h2{flex:1;font-size:18px;margin:0}
+.fold>summary::after{content:"";width:9px;height:9px;border-right:2.5px solid var(--muted);border-bottom:2.5px solid var(--muted);transform:rotate(45deg);margin:0 6px 4px 0;flex:none}
+.fold[open]>summary::after{transform:rotate(-135deg);margin-bottom:-4px}
+.hb{display:flex;flex-direction:column;gap:10px}
+.hb ul,.hb ol{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px}
+.hb ul.pkg{list-style:none;padding:0;gap:0}
+.pkg li{display:flex;justify-content:space-between;gap:8px;padding:7px 0;border-bottom:1px solid var(--line);font-size:15px}
+.pkg li b{white-space:nowrap;color:var(--muted)}
+.pkg li.hl{color:var(--amb-ink);font-weight:700}
+.svc .ptag{display:inline-flex;align-items:center;gap:4px}
+.ptag .ic{width:14px;height:14px}
+.tile{min-height:88px;gap:4px;padding:10px 8px}
+.tile .ti{width:26px;height:26px}
+.tile .ti .ic{width:15px;height:15px}
+.tile .tn{font-size:32px}
+.tile .tl{font-size:14px}
+.alert{min-height:60px;padding:9px 12px;grid-template-columns:34px 1fr auto}
+.alert .ai{width:34px;height:34px}
+.alert b{font-size:16px}
+.chips.scroll{flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+.chips.scroll .fchip{flex:none}
+main{gap:14px}
+.pkg li{display:grid;grid-template-columns:86px 1fr;gap:8px}
+.pkg li b{color:var(--ink)}

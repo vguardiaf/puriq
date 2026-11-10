@@ -12,6 +12,7 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 
 from . import rules
+from .ficha3 import PLAN_PARTO
 
 DATA = Path(__file__).resolve().parents[1] / "data" / "quinua_gestantes.json"
 _lock = threading.Lock()
@@ -41,6 +42,9 @@ class Store:
                 if rng.random() < prob:
                     entregados[s.id] = min(fin, self.hoy).isoformat()
             g["entregados"] = entregados
+            # Plan de parto: completo si el servicio figura como entregado; si no, a medio llenar.
+            todos = list(PLAN_PARTO)
+            g["plan_parto"] = todos if "plan" in entregados else [k for k in todos if rng.random() < 0.45]
             g["visitas"] = []
             if g["ultima_visita_hace_dias"] is not None:
                 g["visitas"].append({
@@ -93,6 +97,7 @@ class Store:
             "dias_al_parto": (fpp - self.hoy).days,
             "alertas": alertas, "recordatorios": recordatorios,
             "derivada_ultima_visita": bool(ultima and ultima.get("derivada")),
+            "plan_parto": {"marcados": g["plan_parto"], "total": len(PLAN_PARTO)},
             "no_consume_suplemento": g["no_consume_suplemento_ultima_visita"],
             "visitas": len([v for v in g["visitas"]]),
         }
@@ -123,6 +128,17 @@ class Store:
             sup = visita.get("campos", {}).get("suplementos", {})
             if sup:
                 g["no_consume_suplemento_ultima_visita"] = any(v == "no" for v in sup.values())
+        return self.detalle(gid)
+
+    def guardar_plan_parto(self, gid: str, marcados: list[str]) -> dict:
+        """Guarda lo verificado del plan de parto. Completo = servicio 'Plan de parto' entregado."""
+        with _lock:
+            g = self.gestantes[gid]
+            g["plan_parto"] = [k for k in PLAN_PARTO if k in set(marcados)]
+            if len(g["plan_parto"]) == len(PLAN_PARTO):
+                g["entregados"]["plan"] = self.hoy.isoformat()
+            else:
+                g["entregados"].pop("plan", None)
         return self.detalle(gid)
 
     def registrar_derivacion(self, gid: str, derivacion: dict) -> dict:

@@ -97,6 +97,19 @@ def deshacer(gid: str, sid: str):
     return _con_prioridad(STORE.deshacer_entrega(gid, sid))
 
 
+class PlanParto(BaseModel):
+    marcados: list[str] = []
+
+
+@app.post("/api/gestantes/{gid}/plan-parto")
+def plan_parto(gid: str, body: PlanParto):
+    """Verificación del plan de parto (III trimestre). Completo = servicio 'Plan de parto' entregado."""
+    g = _gestante(gid)
+    if STORE.resumen(g)["trimestre"] != 3:
+        raise HTTPException(422, "El plan de parto se verifica en el III trimestre")
+    return _con_prioridad(STORE.guardar_plan_parto(gid, body.marcados))
+
+
 # ─────────────────────────────── visita domiciliaria (Ficha 3)
 @app.post("/api/visita/transcribir")
 async def transcribir(audio: UploadFile = File(...)):

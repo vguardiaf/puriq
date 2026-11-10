@@ -125,3 +125,24 @@ def test_entrega_y_deshacer():
 def test_errores_claros():
     assert client.get("/api/gestantes/NOEXISTE").status_code == 404
     assert client.get("/api/ruta?jornada=5").status_code == 422
+
+
+def test_plan_de_parto_solo_iii_trimestre_y_completo_es_recibido():
+    STORE.reiniciar()
+    g = client.get("/api/gestantes").json()
+    t3 = next(x for x in g if x["trimestre"] == 3)
+    t2 = next(x for x in g if x["trimestre"] == 2)
+    assert client.post(f"/api/gestantes/{t2['id']}/plan-parto", json={"marcados": []}).status_code == 422
+    todos = list(ficha3.PLAN_PARTO)
+    d = client.post(f"/api/gestantes/{t3['id']}/plan-parto", json={"marcados": todos}).json()
+    assert next(s for s in d["servicios"] if s["id"] == "plan")["estado"] == "rec"
+    d = client.post(f"/api/gestantes/{t3['id']}/plan-parto", json={"marcados": todos[:3]}).json()
+    assert next(s for s in d["servicios"] if s["id"] == "plan")["estado"] != "rec"
+    STORE.reiniciar()
+
+
+def test_grupos_de_gestantes_cuadran():
+    g = client.get("/api/gestantes").json()
+    con_alertas = [x for x in g if x["bucket"] == "amar"]
+    assert len(con_alertas) == sum(1 for x in g if x["alertas"])
+    assert sum(1 for x in g if x["bucket"] in ("amar", "verde", "ok")) == len(g)

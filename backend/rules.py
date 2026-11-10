@@ -45,6 +45,8 @@ SERVICIOS = [
     Servicio("fe5", "fe", FE, 8, 8, False),
     Servicio("cpn6", "cpn", "Control prenatal 6", 9, 9, False),
     Servicio("fe6", "fe", FE, 9, 9, False),
+    # Solo III trimestre: el agente verifica en casa que el plan de parto esté completo.
+    Servicio("plan", "plan", "Plan de parto", 7, 9, True),
 ]
 SERVICIO_POR_ID = {s.id: s for s in SERVICIOS}
 
@@ -87,9 +89,12 @@ def estado(fur: date, s: Servicio, entregado: bool, hoy: date) -> str:
 
 
 def bucket(conteo: dict[str, int]) -> str:
-    """Color de la persona: rojo si tiene algún perdido, ámbar si tiene pendientes, si no al día."""
-    if conteo.get("rojo"):
-        return "rojo"
+    """Grupo de la gestante (excluyente, para que los números cuadren):
+    amar = con alertas (algún servicio pendiente que aún se recupera);
+    verde = con recordatorios (sin alertas y algún servicio en fecha);
+    ok = al día (nada que recordar). Los perdidos se muestran aparte, por servicio."""
     if conteo.get("amar"):
         return "amar"
+    if conteo.get("verde"):
+        return "verde"
     return "ok"
