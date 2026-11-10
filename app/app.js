@@ -28,22 +28,22 @@ async function api(path, opts = {}) {
 const IC = { alerta: "alert", recordatorio: "bell", perdido: "x", recibido: "check", futuro: "cal", visita: "clock", derivacion: "hosp", aldia: "check" };
 const NIVEL = {
   alerta: { t: "Alerta", i: IC.alerta, color: "#B97F00" },
-  seguimiento: { t: "Seguimiento", i: IC.derivacion, color: "#5B4BC4" },
+  seguimiento: { t: "¿Fue a la posta?", i: IC.derivacion, color: "#5B4BC4" },
   vencida: { t: "Visita vencida", i: IC.visita, color: "#D12F2F" },
   toca: { t: "Le toca visita", i: IC.visita, color: "#2B8E4E" },
-  recomendada: { t: "Recordatorio", i: IC.recordatorio, color: "#2B8E4E" },
+  recomendada: { t: "Le toca pronto", i: IC.recordatorio, color: "#2B8E4E" },
   al_dia: { t: "Al día", i: IC.aldia, color: "#8A92A3" },
 };
-const BUCKET = { amar: ["Con alertas", IC.alerta], verde: ["Con recordatorios", IC.recordatorio], ok: ["Al día", IC.aldia] };
+const BUCKET = { amar: ["Con alertas", IC.alerta], verde: ["Le toca pronto", IC.recordatorio], ok: ["Al día", IC.aldia] };
 const ICON = { rojo: IC.perdido, amar: IC.alerta, verde: IC.recordatorio, rec: IC.recibido, fut: IC.futuro };
-const COLORES = [["amar", "Alerta", "Venció, pero aún se puede hacer."], ["verde", "Recordatorio", "Está en su fecha."],
+const COLORES = [["amar", "Alerta", "Venció, pero aún se puede hacer."], ["verde", "Le toca pronto", "Está en su fecha."],
   ["rojo", "Perdido", "Ya no se puede hacer."], ["rec", "Recibido", "Ya lo recibió."], ["fut", "Más adelante", "Todavía no le toca."]];
 const pillNivel = (n) => `<span class="pill st-${n}">${ic(NIVEL[n].i)}${NIVEL[n].t}</span>`;
 
 
 // ─────────────────────────────── estado
 const S = {
-  view: "inicio", pid: null, filtro: "all", q: "", jornada: 240,
+  view: "inicio", pid: null, filtro: "all", q: "", jornada: 120,
   meta: null, lista: null, ruta: null, cat: null, det: null,
   v: null, // visita en curso
 };
@@ -60,13 +60,11 @@ function vInicio() {
   const grupo = { amar: [], verde: [], ok: [] };
   L.forEach((g) => grupo[g.bucket].push(g));
   const alertas = grupo.amar.slice().sort((a, b) => b.prioridad.puntaje - a.prioridad.puntaje);
-  const sv = { rec: 0, verde: 0, amar: 0, rojo: 0 };
-  L.forEach((g) => Object.keys(sv).forEach((k) => (sv[k] += g.conteo[k] || 0)));
-  const totalSv = sv.rec + sv.verde + sv.amar + sv.rojo;
+  const vm = L.filter((g) => g.visitada_este_mes).length;
+  const pct = L.length ? Math.round((vm / L.length) * 100) : 0;
   const R = S.ruta?.totales;
   const tile = (k) => `<button class="tile st-${k}${grupo[k].length ? "" : " zero"}" data-act="list" data-f="${k}" aria-label="${BUCKET[k][0]}: ${grupo[k].length}">
       <span class="ti">${ic(BUCKET[k][1])}</span><span class="tn">${grupo[k].length}</span><span class="tl">${BUCKET[k][0]}</span></button>`;
-  const segs = [["rec", "Recibidos"], ["verde", "En fecha"], ["amar", "Pendientes"], ["rojo", "Perdidos"]];
   return `
   <header class="greet"><h2>Hola, ${esc(nombreAg)}</h2><p>${esc(cap(fmtL(d)))} · ${esc(S.meta?.localidad || "")}</p></header>
   <button class="cta" data-act="go" data-view="ruta"><span class="ci">${ic("route")}</span>
@@ -74,9 +72,9 @@ function vInicio() {
   <section class="card" aria-labelledby="h-g">
     <h2 id="h-g">Tus ${L.length} gestantes</h2>
     <div class="tiles">${tile("amar")}${tile("verde")}${tile("ok")}</div>
-    <p class="muted"><b>${totalSv}</b> servicios hasta hoy</p>
-    <div class="bar fat" aria-hidden="true">${segs.map(([k]) => (sv[k] ? `<i class="st-${k}" style="flex:${sv[k]}"></i>` : "")).join("")}</div>
-    <ul class="keys">${segs.map(([k, t]) => `<li class="st-${k}">${ic(ICON[k])}<b>${sv[k]}</b>${t}</li>`).join("")}</ul>
+    <div class="meta"><div class="sec-head"><b>Este mes</b><span><b>${vm}</b> de ${L.length} visitadas</span></div>
+      <div class="pbar" role="progressbar" aria-valuenow="${vm}" aria-valuemin="0" aria-valuemax="${L.length}" aria-label="Gestantes visitadas este mes"><i style="width:${pct}%"></i></div>
+      <p class="muted">Te faltan ${L.length - vm}. Cada una: 2 visitas al mes.</p></div>
   </section>
   ${alertas.length ? `<section class="card" aria-labelledby="h-al">
     <div class="sec-head"><h2 id="h-al">Alertas</h2><button class="link" data-act="list" data-f="amar">Ver las ${alertas.length}</button></div>
@@ -89,14 +87,14 @@ function vRuta() {
   const R = S.ruta;
   if (!R) return `<div class="empty">Calculando la ruta…</div>`;
   const T = R.totales;
-  const opts = [180, 240, 300, 360].map((m) => `<button data-act="jornada" data-min="${m}" aria-pressed="${S.jornada === m}">${m / 60} h</button>`).join("");
+  const opts = [60, 120, 180, 240].map((m) => `<button data-act="jornada" data-min="${m}" aria-pressed="${S.jornada === m}">${m / 60} h</button>`).join("");
   const paradas = R.paradas.map((p) => `
     <li class="stop st-${p.nivel}">
       <span class="num" aria-hidden="true">${p.n}</span>
       <div class="box">
         <div class="when"><span>${ic(IC.visita)} ${p.llegada}</span><span>${p.camino_min} min a pie · ${p.camino_m} m</span></div>
         <span class="nm">${p.n}. ${esc(p.nombre)}</span>
-        <span class="mt">Semana ${p.semana} · ${esc(p.direccion)}</span>
+        <span class="mt">${p.mes} meses · ${esc(p.direccion)}</span>
         <div class="cc">${pillNivel(p.nivel)}</div>
         <ul>${p.razones.slice(0, 3).map((r) => `<li>${esc(r)}</li>`).join("")}</ul>
         <div class="acts">
@@ -107,8 +105,8 @@ function vRuta() {
     </li>`).join("");
   return `
   <section class="card" aria-labelledby="h-r">
-    <div class="sec-head"><h2 id="h-r">Ruta de hoy</h2><span class="muted">Sale ${R.hora_inicio} del ${esc(R.inicio.nombre)}</span></div>
-    <div><span class="muted" id="lj">Tiempo disponible</span><div class="seg" role="group" aria-labelledby="lj">${opts}</div></div>
+    <div class="sec-head"><h2 id="h-r">Ruta de hoy</h2><span class="muted">${new Date().getHours() >= 17 ? "Mañana" : "Hoy"} desde las ${R.hora_inicio}</span></div>
+    <div><span class="muted" id="lj">¿Cuánto tiempo tienes hoy?</span><div class="seg" role="group" aria-labelledby="lj">${opts}</div></div>
     <div class="stats">
       <div class="stat"><b>${T.visitas}</b><span>${plural(T.visitas, "visita", "visitas")}</span></div>
       <div class="stat"><b>${T.km}</b><span>km a pie</span></div>
@@ -136,7 +134,7 @@ function vGestantes() {
   <label class="sr" for="q">Buscar gestante</label>
   <input id="q" class="search" type="search" placeholder="Buscar por nombre o sector" value="${esc(S.q)}" autocomplete="off">
   <div class="chips scroll" role="group" aria-label="Filtrar">
-    ${chip("all", "Todas")}${chip("amar", "Con alertas", "amar")}${chip("verde", "Con recordatorios", "verde")}${chip("ok", "Al día", "ok")}${chip("vencida", "Visita vencida", "vencida")}
+    ${chip("all", "Todas")}${chip("amar", "Con alertas", "amar")}${chip("verde", "Le toca pronto", "verde")}${chip("ok", "Al día", "ok")}${chip("vencida", "Visita vencida", "vencida")}
   </div>
   <p class="muted" aria-live="polite">${rows.length} ${plural(rows.length, "gestante", "gestantes")} · ordenadas por prioridad</p>
   ${rows.length ? `<ul class="list">${rows.map((g) => {
@@ -144,7 +142,7 @@ function vGestantes() {
     const vis = g.dias_desde_visita == null ? "sin visitas" : `visita hace ${g.dias_desde_visita} d`;
     return `<li><button class="row st-${g.bucket}" data-act="open" data-id="${g.id}">
       <span class="av">${initials(g.nombre)}</span>
-      <span><span class="nm">${esc(g.nombre)}</span><span class="mt">Semana ${g.semana} · ${esc(g.sector)} · ${vis}</span>
+      <span><span class="nm">${esc(g.nombre)}</span><span class="mt">${g.mes} meses · ${esc(g.sector)} · ${vis}</span>
       <span class="cc">${["vencida", "toca", "seguimiento"].includes(g.prioridad.nivel) ? pillNivel(g.prioridad.nivel) : ""}
         ${[["rojo", "x"], ["amar", "alert"], ["verde", "bell"]].filter(([k]) => c[k]).map(([k, i]) => `<span class="pill st-${k}">${ic(i)}${c[k]}</span>`).join("")}</span></span>
       ${ic("chev")}</button></li>`;
@@ -158,7 +156,7 @@ function vFicha() {
   const linea = (s) => (s.estado === "rec" ? `Recibido${s.entregado_el ? " " + fmt(s.entregado_el) : ""}`
     : s.estado === "fut" ? `Desde ${fmt(s.inicio)}` : s.estado === "verde" ? `Hasta ${fmt(s.fin)}`
     : s.estado === "amar" ? "Hasta el parto" : `Venció ${fmt(s.fin)}`);
-  const G = [["amar", "Alertas", "Aún se puede hacer"], ["verde", "Recordatorios", "En su fecha"], ["rojo", "Perdidos", ""],
+  const G = [["amar", "Alertas", "Mire su tarjeta. Si ya lo tiene, toque Recibió"], ["verde", "Le toca pronto", "En su fecha"], ["rojo", "Perdidos", ""],
     ["rec", "Recibidos", ""], ["fut", "Más adelante", ""]];
   const grupos = G.map(([k, t, sub]) => {
     const l = by(k);
@@ -180,12 +178,12 @@ function vFicha() {
       <button class="big teal" data-act="plan">${ic(IC.recibido)}Guardar</button>
     </details>` : "";
   const hist = g.historial.length
-    ? `<ul class="hist">${g.historial.map((v) => `<li class="${v.derivada ? "st-rojo" : "st-rec"}"><b>${fmt(v.fecha)}</b> · ${v.derivada ? "Derivada al EESS" : "Visita"}</li>`).join("")}</ul>`
+    ? `<ul class="hist">${g.historial.map((v) => `<li class="${v.derivada ? "st-rojo" : "st-rec"}"><b>${fmt(v.fecha)}</b> · ${v.derivada ? "Avisamos a la posta" : "Visita"}</li>`).join("")}</ul>`
     : `<p class="muted">Sin visitas.</p>`;
   return `
   <section class="hero st-${g.bucket}">
     <div class="id"><span class="av">${initials(g.nombre)}</span><div><h2>${esc(g.nombre)}</h2>
-      <span class="mt">Semana ${g.semana} · Trim. ${TRIM[g.trimestre]} · ${esc(g.sector)}</span></div></div>
+      <span class="mt">${g.mes} meses de embarazo · ${esc(g.sector)}</span></div></div>
     <dl class="facts">
       <div><dt>PARTO</dt><dd>${fmt(g.fpp)}</dd></div>
       <div><dt>ÚLTIMA VISITA</dt><dd>${g.dias_desde_visita == null ? "Ninguna" : `Hace ${g.dias_desde_visita} d`}</dd></div>
@@ -216,18 +214,17 @@ function vVisita() {
   const datos = `<section class="card slim st-${g.bucket}" aria-label="Datos de la ficha">
     <div class="id"><span class="av">${initials(g.nombre)}</span><div><b>${esc(g.nombre)}</b>
       <span class="mt">Ficha 3 · Visita N.° ${g.historial.length + 1} · ${hoy}</span>
-      <span class="mt">DNI ${esc(g.dni)} · Semana ${g.semana} (trim. ${TRIM[g.trimestre]}) · Agente: ${esc(S.meta?.agente.split(" (")[0] || "")}</span></div></div>
+      <span class="mt">DNI ${esc(g.dni)} · ${g.mes} meses de embarazo · Agente: ${esc(S.meta?.agente.split(" (")[0] || "")}</span></div></div>
   </section>`;
 
   if (v.fase === "inicio") {
     return `${datos}
     <section class="card rec" aria-labelledby="h-rec">
-      <h2 id="h-rec">Grabar visita</h2>
-      <button class="recbtn" data-act="grabar" aria-label="Empezar a grabar la visita">${ic("mic")}</button>
-      <p class="muted">Pida permiso antes de grabar.</p>
+      <h2 id="h-rec">¿Ella acepta que grabe?</h2>
+      <div class="si-no"><button class="big" data-act="grabar">${ic("mic")}Sí, grabar</button>
+        <button class="big ghost-b" data-act="manual">${ic("edit")}No, llenar a mano</button></div>
       ${v.error ? `<p class="banner st-rojo" role="alert">${ic("alert")}<span>${esc(v.error)}</span></p>` : ""}
-      <button class="sec" data-act="ejemplo">${ic("play")}Usar audio de ejemplo (demo)</button>
-      <button class="ghost" data-act="manual">Llenar sin grabar</button>
+      <button class="ghost" data-act="ejemplo">${ic("play")}Audio de ejemplo (demo)</button>
     </section>`;
   }
   if (v.fase === "grabando") {
@@ -264,7 +261,7 @@ function vVisita() {
     </section>
     ${algunoNo ? `<section class="card" aria-labelledby="h-c10"><h2 id="h-c10">¿Por qué no lo toma?</h2>
       <div class="checks">${Object.entries(cat.motivos).map(([k, l]) => `<label><input type="checkbox" data-motivo="${k}" ${c.motivos.includes(k) ? "checked" : ""}>${esc(l)}</label>`).join("")}</div></section>` : ""}
-    <section class="card" aria-labelledby="h-c11"><h2 id="h-c11">Signos de alarma</h2><p class="muted">Si hay uno, se avisa al EESS.</p>
+    <section class="card" aria-labelledby="h-c11"><h2 id="h-c11">Signos de alarma</h2><p class="muted">Si hay uno, avisamos a la posta.</p>
       ${Object.entries(cat.signos).map(([k, l]) => triHTML("signos", k, l, c.signos[k].valor, c.signos[k].evidencia, true)).join("")}
     </section>
     <section class="card" aria-labelledby="h-c12"><h2 id="h-c12">Hábitos</h2>
@@ -280,17 +277,20 @@ function vVisita() {
   const msg = (m) => `<article class="msg${m.origen === "situacion" ? " sit" : ""}"><div class="mh"><h3>${esc(m.titulo)}</h3></div><p class="say">${esc(m.decir)}</p></article>`;
   return `${datos}
     ${R.derivacion ? `<section class="card deriv" role="alert" aria-labelledby="h-d">
-      <div class="banner st-rojo">${ic("hosp")}<div><b id="h-d">Derivada al EESS por WhatsApp</b>
+      <div class="banner st-rojo">${ic("hosp")}<div><b id="h-d">Avisamos a la posta por WhatsApp</b>
         Enviado a ${esc(R.derivacion.para)} · ${esc(R.derivacion.enviada_en)}. Dígale que vaya hoy.</div></div>
+<div class="si-no"><a class="big red" href="tel:${esc(S.meta?.telefono_posta || "")}">${ic("hosp")}Llamar a la posta</a>
+        <a class="big ghost-b" href="tel:106">${ic("alert")}Emergencia 106</a></div>
+      <details class="fold"><summary><h2>Ver mensaje enviado</h2></summary>
       <div class="wa" aria-label="Mensaje enviado"><div class="wa-head">${ic("msg")}${esc(R.derivacion.para)} · ${esc(R.derivacion.contacto)}</div>
         <p class="wa-bubble">${esc(R.derivacion.texto).replace(/\*([^*]+)\*/g, "<b>$1</b>").replace(/\n/g, "<br>")}<span class="wa-time">${esc(R.derivacion.enviada_en)} ✓✓</span></p></div>
-      <a class="sec" href="${esc(R.derivacion.enlace)}" target="_blank" rel="noopener">${ic("msg")}Abrir en WhatsApp</a>
+      <a class="ghost" href="${esc(R.derivacion.enlace)}" target="_blank" rel="noopener">Abrir en WhatsApp</a></details>
       <p class="muted">Demo: envío simulado.</p>
     </section>` : ""}
-    ${(R.referencias || []).filter((x) => !x.startsWith("Presenta signos")).length ? `<div class="banner st-amar">${ic("hosp")}<div><b>Motivos de referencia al EESS</b><ul>${R.referencias.filter((x) => !x.startsWith("Presenta signos")).map((r) => `<li>${esc(r)}</li>`).join("")}</ul></div></div>` : ""}
+    ${(R.referencias || []).filter((x) => !x.startsWith("Presenta signos")).length ? `<div class="banner st-amar">${ic("hosp")}<div><b>Debe ir a la posta por:</b><ul>${R.referencias.filter((x) => !x.startsWith("Presenta signos")).map((r) => `<li>${esc(r)}</li>`).join("")}</ul></div></div>` : ""}
     <section class="card" aria-labelledby="h-m"><div class="sec-head"><h2 id="h-m">Qué decirle</h2>${R.fuente === "ia" ? `<span class="pill st-ia">${ic("mic")}Redactado con IA</span>` : ""}</div>
       ${sit.length ? `<h3>Por lo que encontró</h3>${sit.map(msg).join("")}` : ""}
-      ${tri.length ? `<h3>Por su trimestre (${TRIM[R.trimestre]})</h3>${tri.map(msg).join("")}` : ""}
+      ${tri.length ? `<h3>Por sus meses de embarazo</h3>${tri.map(msg).join("")}` : ""}
     </section>
     <section class="card"><h2>Compromiso</h2><p class="muted">${esc(R.cierre)}</p>
       <div class="field"><label for="comp">SE COMPROMETE A</label><textarea id="comp" placeholder="Tomar el hierro todos los días">${esc(v.compromiso)}</textarea></div>
@@ -309,14 +309,14 @@ function vAyuda() {
   const colores = COLORES.map(([k, t, d]) => `<div class="lg st-${k}"><span class="dot">${ic(ICON[k])}</span><div><b>${t}</b>${d}</div></div>`).join("");
   const signos = Object.values(cat.signos || {}).map((s) => `<li>${esc(s)}</li>`).join("");
   return `
-  ${box("users", "Tu rol", `<p>Tú <b>no das servicios</b>.</p><p>Tú <b>visitas, recuerdas y derivas</b>.</p>
-    <ul><li>2 visitas al mes, cada 13 a 15 días.</li><li>20 minutos o más por visita.</li><li>Signo de alarma: deriva al EESS.</li></ul>`)}
+  ${box("users", "Tu rol", `<p>Tú <b>no das servicios</b>.</p><p>Tú <b>visitas, recuerdas y avisas a la posta</b>.</p>
+    <ul><li>2 visitas al mes, cada 13 a 15 días.</li><li>20 minutos o más por visita.</li><li>Signo de alarma: avisa a la posta.</li><li>Si es grave: llama al 106.</li></ul>`)}
   ${box("doc", "Servicios de cada gestante", `<p>Los recibe en el establecimiento de salud.</p><ul class="pkg">${paquete}</ul>
-    <p class="muted">El plan de parto se revisa solo en el III trimestre.</p>`)}
+    <p class="muted">El plan de parto se revisa desde el mes 7.</p>`)}
   ${box(IC.alerta, "Colores", colores)}
   ${box("route", "Cómo se arma la ruta", `<ol><li>Primero: alertas y servicios por vencer.</li><li>Luego: visitas vencidas.</li>
     <li>Junta las casas cercanas para caminar menos.</li><li>Entra en tu tiempo del día.</li></ol>`)}
-  ${box(IC.derivacion, "Signos de alarma", `<ul>${signos}</ul><p>Si hay uno, la app <b>envía un WhatsApp</b> al establecimiento más cercano: <b>${esc(S.meta?.eess || "")}</b>.</p>`)}
+  ${box(IC.derivacion, "Signos de alarma", `<ul>${signos}</ul><p>Si hay uno, la app <b>envía un WhatsApp</b> a la posta más cercana: <b>${esc(S.meta?.eess || "")}</b>.</p>`)}
   ${box("mic", "Grabar la Ficha 3", `<p>Pida permiso y grabe la conversación. La app llena:</p>
     <ul><li>Suplementos</li><li>Por qué no los toma</li><li>Signos de alarma</li><li>Hábitos</li></ul><p>Y le da los mensajes para la gestante. Revise antes de guardar.</p>`)}
   ${box("info", "Fuente normativa", `<ul>
@@ -371,8 +371,16 @@ function dibujarMapa() {
     .addTo(mapa).bindPopup(`<b>${esc(R.inicio.nombre)}</b><br>Punto de partida`);
 }
 
+function horaAhora() {
+  const d = new Date();
+  if (d.getHours() >= 17 || d.getHours() < 7) return "08:00"; // fuera de horario: ruta de mañana
+  const m = Math.ceil(d.getMinutes() / 5) * 5;
+  d.setMinutes(m, 0, 0);
+  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+}
+
 async function cargarLista() {
-  [S.lista, S.ruta] = await Promise.all([api("/api/gestantes"), api(`/api/ruta?jornada=${S.jornada}`)]);
+  [S.lista, S.ruta] = await Promise.all([api("/api/gestantes"), api(`/api/ruta?jornada=${S.jornada}&hora=${horaAhora()}`)]);
 }
 
 async function go(view, opts = {}) {
@@ -399,7 +407,7 @@ let rec = null;
 async function grabar() {
   const v = S.v;
   if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
-    v.error = "Este navegador no permite grabar. Use “Usar audio de ejemplo” o “Llenar sin grabar”.";
+    v.error = "Este celular no deja grabar. Llene a mano.";
     return render();
   }
   try {
@@ -490,12 +498,12 @@ async function guardarVisita() {
   try {
     S.det = await api("/api/visita/guardar", { method: "POST", body: JSON.stringify({
       gestante_id: v.pid, campos: soloValores(v.campos), urgente: R.urgente, referencias: R.referencias,
-      mensajes: R.mensajes, compromiso: v.compromiso,
+      mensajes: R.mensajes, compromiso: v.compromiso, consentimiento: v.consentimiento ?? null,
       resumen: (v.fuente === "ia" && v.resumen) || R.referencias.join(" · ") || "Visita realizada sin hallazgos.",
       duracion_s: v.duracion ? Math.round(v.duracion) : v.seg || null }) });
     S.v = null;
     await cargarLista();
-    toast(R.urgente ? "Visita guardada · derivada al EESS" : "Visita guardada");
+    toast(R.urgente ? "Visita guardada · avisamos a la posta" : "Visita guardada");
     go("ficha", { pid: S.det.id });
   } catch (e) { toast(e.message); }
 }
@@ -517,7 +525,7 @@ document.addEventListener("click", async (e) => {
   else if (a === "visita") { if (!S.v || S.v.pid !== b.dataset.id) S.v = nuevaVisita(b.dataset.id); go("visita", { pid: b.dataset.id }); }
   else if (a === "list") { S.filtro = b.dataset.f; go("gestantes"); }
   else if (a === "filtro") { S.filtro = b.dataset.f; render(); }
-  else if (a === "jornada") { S.jornada = Number(b.dataset.min); S.ruta = await api(`/api/ruta?jornada=${S.jornada}`); render(); }
+  else if (a === "jornada") { S.jornada = Number(b.dataset.min); S.ruta = await api(`/api/ruta?jornada=${S.jornada}&hora=${horaAhora()}`); render(); }
   else if (a === "plan") {
     const marcados = [...document.querySelectorAll("[data-plan]:checked")].map((x) => x.dataset.plan);
     S.det = await api(`/api/gestantes/${S.det.id}/plan-parto`, { method: "POST", body: JSON.stringify({ marcados }) });
@@ -532,17 +540,18 @@ document.addEventListener("click", async (e) => {
     toast("Marcado como recibido", async () => { S.det = await api(`/api/gestantes/${gid}/servicios/${sid}`, { method: "DELETE" }); render(); cargarLista(); });
   }
   else if (a === "undo") { $("#toast").hidden = true; if (UNDO) UNDO(); }
-  else if (a === "grabar") grabar();
+  else if (a === "grabar") { v.consentimiento = true; grabar(); }
   else if (a === "parar") pararGrabacion(true);
   else if (a === "cancelar") pararGrabacion(false);
   else if (a === "ejemplo") {
     try {
+      v.consentimiento = true;
       const ej = await api("/api/demo/ejemplo");
       if (ej.audio) procesarAudio(await (await fetch(ej.audio)).blob());
       else { v.texto = ej.texto; llenar(); }
     } catch (err) { v.error = err.message; render(); }
   }
-  else if (a === "manual") { v.campos = camposVacios(); v.fuente = null; v.fase = "ficha"; render(); }
+  else if (a === "manual") { v.consentimiento = v.consentimiento ?? false; v.campos = camposVacios(); v.fuente = null; v.fase = "ficha"; render(); }
   else if (a === "rellenar") { v.texto = $("#tx").value; llenar(); }
   else if (a === "campo") { v.campos[b.dataset.g][b.dataset.k].valor = b.dataset.v; render(); }
   else if (a === "mensajes") generarMensajes();

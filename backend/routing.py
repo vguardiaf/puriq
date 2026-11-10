@@ -65,7 +65,7 @@ def prioridad(r: dict) -> Prioridad:
     # Seguimiento de una derivación hecha en la visita anterior.
     if r.get("derivada_ultima_visita"):
         p += 40
-        razones.append("Verificar si fue al EESS")
+        razones.append("¿Fue a la posta?")
         niveles.add("seguimiento")
     d = r.get("dias_desde_visita")
     if d is None:
@@ -87,7 +87,7 @@ def prioridad(r: dict) -> Prioridad:
         razones.append("No toma suplementos")
     if r["semana"] >= 37:
         p += 15
-        razones.append(f"Semana {r['semana']}: parto cerca")
+        razones.append("Parto cerca")
     elif r["trimestre"] == 3:
         p += 8
     if r["edad"] < 18:
@@ -170,7 +170,7 @@ def planificar(resumenes: list[dict], inicio: dict, jornada_min: int = 240, hora
         pr = prios[r["id"]]
         paradas.append({
             "n": n, "id": r["id"], "nombre": r["nombre"], "sector": r["sector"], "direccion": r["direccion"],
-            "lat": r["lat"], "lon": r["lon"], "semana": r["semana"], "bucket": r["bucket"],
+            "lat": r["lat"], "lon": r["lon"], "semana": r["semana"], "mes": r["mes"], "bucket": r["bucket"],
             "nivel": pr.nivel, "puntaje": pr.puntaje, "razones": pr.razones,
             "llegada": reloj.strftime("%H:%M"), "camino_min": round(M[a][b]), "camino_m": round(metros[a][b]),
         })

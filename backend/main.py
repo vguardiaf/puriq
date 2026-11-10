@@ -50,7 +50,7 @@ def _con_prioridad(r: dict) -> dict:
 # ─────────────────────────────── lectura
 @app.get("/api/estado")
 def estado():
-    return {**STORE.meta, "hoy": STORE.hoy.isoformat(), "agente": f"{AGENTE} (agente comunitaria)", "eess": STORE.inicio["nombre"],
+    return {**STORE.meta, "hoy": STORE.hoy.isoformat(), "agente": f"{AGENTE} (agente comunitaria)", "eess": STORE.inicio["nombre"], "telefono_posta": "+" + STORE.inicio.get("whatsapp", ""),
             "ia": bool(os.getenv("ANTHROPIC_API_KEY")), "modelo_ia": ia.MODELO,
             "whisper": os.getenv("WHISPER_MODEL", "small"), "version": "Lite"}
 
@@ -176,6 +176,7 @@ class Guardar(BaseModel):
     compromiso: str = ""
     resumen: str = ""
     duracion_s: int | None = None
+    consentimiento: bool | None = None
 
 
 @app.post("/api/visita/guardar")

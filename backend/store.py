@@ -98,6 +98,7 @@ class Store:
             "alertas": alertas, "recordatorios": recordatorios,
             "derivada_ultima_visita": bool(ultima and ultima.get("derivada")),
             "plan_parto": {"marcados": g["plan_parto"], "total": len(PLAN_PARTO)},
+            "visitada_este_mes": any(v["fecha"][:7] == self.hoy.isoformat()[:7] for v in g["visitas"]),
             "no_consume_suplemento": g["no_consume_suplemento_ultima_visita"],
             "visitas": len([v for v in g["visitas"]]),
         }
