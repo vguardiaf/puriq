@@ -55,7 +55,7 @@ Cómo cubro cada frente con agentes de IA:
 
 **Cómo lo resuelven hoy:** papel, memoria y WhatsApp. La ruta se arma "por cercanía" y no por urgencia; las fichas se pasan días después y con errores; cuando el agente detecta un signo de alarma, avisar al establecimiento depende de que tenga saldo y el número a la mano.
 
-**Cuánto cuesta:** cada promotora sigue de 6 a 30 familias, a veces a horas de camino o en bote. Sin internet, **la visita se hace pero el registro se pierde**: no se sincroniza a tiempo. Las apps para madres no se usan por falta de señal y por celulares sin espacio, y algunos promotores mayores necesitan acompañamiento para usar la tecnología. Lo que se pierde es la gestante a la que le faltaba un servicio y nadie lo supo a tiempo.
+**Cuánto cuesta:** cada promotora sigue de 6 a 30 familias en localidades dispersas, donde planificar la ruta del día es una necesidad real. Sin internet, **la visita se hace pero el registro se pierde**: no se sincroniza a tiempo. Las apps para madres no se usan por falta de señal y por celulares sin espacio, y algunos promotores mayores necesitan acompañamiento para usar la tecnología. Lo que se pierde es la gestante a la que le faltaba un servicio y nadie lo supo a tiempo.
 
 **Evidencia:** [`docs/research/`](docs/research/) tiene las notas de tres fuentes:
 - los diagnósticos territoriales con coordinadores de vigilancia comunitaria en 5 ámbitos de Ayacucho, Huancavelica y Cusco;
