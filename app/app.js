@@ -79,11 +79,11 @@ function estadoSenal() {
 // Íconos estándar: un solo ícono por concepto en toda la app.
 const IC = { alerta: "alert", recordatorio: "bell", perdido: "x", recibido: "check", futuro: "cal", visita: "clock", derivacion: "hosp", aldia: "check" };
 const NIVEL = {
-  alerta: { t: "Alerta", i: IC.alerta, color: "#D98267" },
+  alerta: { t: "Alerta", i: IC.alerta, color: "#EDC35F" },
   seguimiento: { t: "¿Fue a la posta?", i: IC.derivacion, color: "#5B4BC4" },
-  vencida: { t: "Visita vencida", i: IC.visita, color: "#B5473A" },
-  toca: { t: "Le toca visita", i: IC.visita, color: "#6E9B70" },
-  recomendada: { t: "Le toca pronto", i: IC.recordatorio, color: "#6E9B70" },
+  vencida: { t: "Visita vencida", i: IC.visita, color: "#E59A90" },
+  toca: { t: "Le toca visita", i: IC.visita, color: "#9BC79A" },
+  recomendada: { t: "Le toca pronto", i: IC.recordatorio, color: "#9BC79A" },
   al_dia: { t: "Al día", i: IC.aldia, color: "#8A92A3" },
 };
 const BUCKET = { amar: ["Con alertas", IC.alerta], verde: ["Le toca pronto", IC.recordatorio], ok: ["Al día", IC.aldia] };
@@ -416,7 +416,7 @@ function dibujarMapa() {
       L.marker([lat, lon], { icon: L.divIcon({ className: "", html: `<span class="mk" style="background:${col}">${p.orden}</span>`, iconSize: [30, 30], iconAnchor: [15, 15] }), title: p.nombre, zIndexOffset: 500 })
         .addTo(mapa).bindPopup(pop);
     } else {
-      L.circleMarker([lat, lon], { radius: 6, color: "#fff", weight: 2, fillColor: col, fillOpacity: 0.9 }).addTo(mapa).bindPopup(pop);
+      L.circleMarker([lat, lon], { radius: 7, color: "#26352F", weight: 1.5, fillColor: col, fillOpacity: 0.9 }).addTo(mapa).bindPopup(pop);
     }
   });
   L.marker([R.inicio.lat, R.inicio.lon], { icon: L.divIcon({ className: "", html: `<span class="mk start">${ic("hosp")}</span>`, iconSize: [30, 30], iconAnchor: [15, 15] }), title: R.inicio.nombre })
