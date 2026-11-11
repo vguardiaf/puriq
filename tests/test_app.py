@@ -14,6 +14,8 @@ from backend.store import STORE
 
 HOY = date(2026, 11, 10)
 client = TestClient(app)
+_act = client.post("/api/auth/activar", json={"codigo": "482913"}).json()
+client.headers["X-Token"] = _act["token"]
 
 
 # ─────────────────────────────── semáforo
@@ -185,3 +187,24 @@ def test_limite_de_solicitudes():
     finally:
         m.LIMITE_POR_MIN = antes
         m._llamadas.clear()
+
+
+# ─────────────────────────────── acceso: activación por la posta + token
+def test_sin_token_no_hay_datos():
+    anon = TestClient(app)
+    assert anon.get("/api/gestantes").status_code == 401
+    assert anon.post("/api/auth/activar", json={"codigo": "000000"}).status_code == 401
+
+
+def test_activacion_token_y_revocacion():
+    r = TestClient(app).post("/api/auth/activar", json={"codigo": "482913"}).json()
+    assert r["agente"]["nombre"] == "Rosa Huamán" and r["agente"]["iniciales"] == "RH"
+    c = TestClient(app)
+    c.headers["X-Token"] = r["token"]
+    assert c.get("/api/estado").json()["agente"].startswith("Rosa")
+    falso = r["token"][:-1] + ("0" if r["token"][-1] != "0" else "1")
+    c.headers["X-Token"] = falso
+    assert c.get("/api/gestantes").status_code == 401
+    c.headers["X-Token"] = r["token"]
+    assert c.post("/api/auth/revocar", json={"token": r["token"]}).json()["ok"]
+    assert c.get("/api/gestantes").status_code == 401

@@ -13,13 +13,13 @@ from pathlib import Path
 from urllib.parse import quote
 
 from fastapi import Depends, FastAPI, File, HTTPException, Request, UploadFile
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from ai import transcribir as asr
 from ai import visita as ia
-from . import ficha3, rules
+from . import auth, ficha3, rules
 from .routing import planificar, prioridad
 from .store import STORE
 
@@ -50,6 +50,40 @@ async def _vida(_app: FastAPI):
 
 app = FastAPI(title="Puriq Lite", version="0.1.0", docs_url="/api/docs", redoc_url=None, lifespan=_vida)
 
+ABIERTAS = ("/api/auth/activar", "/api/docs")
+
+
+@app.middleware("http")
+async def _exigir_token(request: Request, call_next):
+    """Toda la API pide el token del celular activado por la posta (el PIN se verifica en el celular)."""
+    ruta = request.url.path
+    if ruta.startswith("/api/") and not ruta.startswith(ABIERTAS):
+        if not auth.verificar(request.headers.get("x-token")):
+            return JSONResponse({"detail": "Active su celular con el código de la posta."}, status_code=401)
+    return await call_next(request)
+
+
+class Activacion(BaseModel):
+    codigo: str = Field(min_length=4, max_length=12)
+
+
+@app.post("/api/auth/activar", dependencies=[Depends(_limite)])
+def activar(body: Activacion):
+    r = auth.activar(body.codigo)
+    if not r:
+        raise HTTPException(401, "Código no válido. Pida uno nuevo a la posta.")
+    return r
+
+
+class Revocar(BaseModel):
+    token: str
+
+
+@app.post("/api/auth/revocar")
+def revocar(body: Revocar):
+    """La posta desactiva un celular (en la versión completa, solo desde su panel)."""
+    return {"ok": auth.revocar(body.token)}
+
 
 def _gestante(gid: str) -> dict:
     if gid not in STORE.gestantes:
@@ -64,8 +98,9 @@ def _con_prioridad(r: dict) -> dict:
 
 # ─────────────────────────────── lectura
 @app.get("/api/estado")
-def estado():
-    return {**STORE.meta, "hoy": STORE.hoy.isoformat(), "agente": f"{AGENTE} (agente comunitaria)", "eess": STORE.inicio["nombre"], "telefono_posta": "+" + STORE.inicio.get("whatsapp", ""),
+def estado(request: Request):
+    yo = auth.verificar(request.headers.get("x-token")) or {"nombre": AGENTE}
+    return {**STORE.meta, "hoy": STORE.hoy.isoformat(), "agente": f"{yo['nombre']} (agente comunitaria)", "eess": STORE.inicio["nombre"], "telefono_posta": "+" + STORE.inicio.get("whatsapp", ""),
             "ia": bool(os.getenv("ANTHROPIC_API_KEY")), "modelo_ia": ia.MODELO,
             "whisper": os.getenv("WHISPER_MODEL", "small"), "version": "Lite"}
 

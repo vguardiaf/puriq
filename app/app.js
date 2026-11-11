@@ -14,14 +14,66 @@ const fmtL = (d) => d.toLocaleDateString("es-PE", { weekday: "long", day: "numer
 const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 const TRIM = { 1: "I", 2: "II", 3: "III" };
 
+// Acceso y datos guardados en el celular (funcionan sin señal).
+const AUTH_KEY = "puriq.acceso", COLA_KEY = "puriq.pendientes", MAX_FALLOS = 5, BLOQUEO_MS = 7 * 60 * 1000;
+const leerLS = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch (_) { return d; } };
+const guardarLS = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (_) {} };
+let ACC = leerLS(AUTH_KEY, null); // { token, agente: {nombre, iniciales, posta}, pin: {sal, hash}, fallos }
+const ENCOLABLES = /^\/api\/(gestantes\/[^/]+\/(servicios|plan-parto)|visita\/(aviso|guardar))/;
+
 async function api(path, opts = {}) {
-  const r = await fetch(path, { headers: opts.body && !(opts.body instanceof FormData) ? { "Content-Type": "application/json" } : {}, ...opts });
+  const headers = { ...(opts.body && !(opts.body instanceof FormData) ? { "Content-Type": "application/json" } : {}),
+    ...(ACC?.token ? { "X-Token": ACC.token } : {}) };
+  let r;
+  try {
+    r = await fetch(path, { ...opts, headers });
+  } catch (e) {
+    // Sin señal: los envíos se guardan en el celular y se mandan cuando vuelve la señal.
+    if ((opts.method || "GET").toUpperCase() !== "GET" && ENCOLABLES.test(path)) { encolar(path, opts); return { _sinSenal: true }; }
+    throw new Error("Sin señal. Intente de nuevo.");
+  }
+  if (r.status === 401 && !path.startsWith("/api/auth/")) {
+    salir("Este celular fue desactivado. Pida un código a la posta.");
+    throw new Error("Sin acceso");
+  }
   if (!r.ok) {
     let msg = `Error ${r.status}`;
     try { msg = (await r.json()).detail || msg; } catch (_) {}
     throw new Error(msg);
   }
   return r.json();
+}
+
+function encolar(path, opts) {
+  const c = leerLS(COLA_KEY, []);
+  c.push({ path, method: opts.method || "POST", body: opts.body || null });
+  guardarLS(COLA_KEY, c);
+}
+
+async function enviarPendientes() {
+  const c = leerLS(COLA_KEY, []);
+  if (!c.length || !navigator.onLine || !ACC?.token) return;
+  const quedan = [];
+  for (const x of c) {
+    try {
+      const r = await fetch(x.path, { method: x.method, body: x.body, headers: { "Content-Type": "application/json", "X-Token": ACC.token } });
+      if (r.status >= 500) quedan.push(x);
+    } catch (_) { quedan.push(x); }
+  }
+  guardarLS(COLA_KEY, quedan);
+  const enviados = c.length - quedan.length;
+  if (enviados) {
+    toast(`Se enviaron ${enviados} ${plural(enviados, "dato guardado", "datos guardados")} sin señal`);
+    try { await cargarLista(); if (S.det) S.det = await api(`/api/gestantes/${S.det.id}`); } catch (_) {}
+  }
+  if (!S.acceso) render();
+}
+
+function estadoSenal() {
+  const n = leerLS(COLA_KEY, []).length;
+  if (!navigator.onLine) return `<span class="pill st-rojo senal">${ic("x")}Sin señal${n ? ` · ${n} por enviar` : ""}</span>`;
+  if (n) return `<span class="pill st-amar senal">${n} por enviar</span>`;
+  return `<span class="tag-mock">Datos ficticios</span>`;
 }
 
 // Íconos estándar: un solo ícono por concepto en toda la app.
@@ -222,7 +274,7 @@ function vVisita() {
     return `${datos}
     <section class="card rec" aria-labelledby="h-rec">
       <h2 id="h-rec">¿Ella acepta que grabe?</h2>
-      <div class="si-no"><button class="big" data-act="grabar">${ic("mic")}Sí, grabar</button>
+      <div class="si-no">${navigator.onLine ? `<button class="big" data-act="grabar">${ic("mic")}Sí, grabar</button>` : `<p class="banner st-amar">${ic(IC.alerta)}<span>Sin señal: llene a mano.</span></p>`}
         <button class="big ghost-b" data-act="manual">${ic("edit")}No, llenar a mano</button></div>
       ${v.error ? `<p class="banner st-rojo" role="alert">${ic("alert")}<span>${esc(v.error)}</span></p>` : ""}
       <button class="ghost" data-act="ejemplo">${ic("play")}Audio de ejemplo (demo)</button>
@@ -286,7 +338,8 @@ function vVisita() {
       <a class="big red" href="${esc(R.derivacion.tel)}" data-aviso="llamada">${ic(IC.derivacion)}Llamar a la posta</a>
       <details class="fold"><summary><h2>Ver el mensaje</h2></summary><p class="wa-bubble">${esc(R.derivacion.texto)}</p></details>
     </section>` : ""}
-    <section class="card" aria-labelledby="h-m"><div class="sec-head"><h2 id="h-m">Qué decirle</h2>${R.fuente === "ia" ? `<span class="pill st-ia">${ic("mic")}Redactado con IA</span>` : ""}</div>
+    ${R.sinSenal ? `<p class="banner st-amar">${ic(IC.alerta)}<span>Sin señal: los consejos se verán cuando haya señal.</span></p>` : ""}
+    <section class="card" aria-labelledby="h-m"${R.mensajes.length ? "" : " hidden"}><div class="sec-head"><h2 id="h-m">Qué decirle</h2>${R.fuente === "ia" ? `<span class="pill st-ia">${ic("mic")}Redactado con IA</span>` : ""}</div>
       ${sit.length ? `<h3>Por lo que encontró</h3>${sit.map(msg).join("")}` : ""}
       ${tri.length ? `<h3>Por sus meses de embarazo</h3>${tri.map(msg).join("")}` : ""}
     </section>
@@ -329,11 +382,13 @@ const main = $("#main"), topEl = $("#top"), nav = $("#nav");
 let mapa = null, lastView = null;
 
 function render() {
+  if (S.acceso) { topEl.hidden = true; nav.hidden = true; main.innerHTML = vAcceso(); return; }
+  topEl.hidden = false; nav.hidden = false;
   const v = S.view;
   const titulo = { ficha: S.det?.nombre || "Gestante", visita: "Visita domiciliaria", ayuda: "Ayuda" }[v];
   topEl.innerHTML = titulo && v !== "ayuda"
     ? `<button class="back" data-act="back">${ic("back")}Volver</button><h1>${esc(titulo)}</h1>`
-    : `<span class="brand"><svg class="logo" viewBox="0 0 64 64" aria-hidden="true"><use href="#i-puriq"/></svg>puriq <span class="lite">LITE</span></span><span class="tag-mock">Datos ficticios</span>`;
+    : `<span class="brand"><svg class="logo" viewBox="0 0 64 64" aria-hidden="true"><use href="#i-puriq"/></svg>puriq <span class="lite">LITE</span></span>${estadoSenal()}<button class="lockbtn" data-acc="bloquear" aria-label="Bloquear la app">${ic("lock")}</button>`;
   main.innerHTML = { inicio: vInicio, ruta: vRuta, gestantes: vGestantes, ficha: vFicha, visita: vVisita, ayuda: vAyuda }[v]();
   const cur = v === "ficha" || v === "visita" ? "gestantes" : v;
   nav.innerHTML = [["inicio", "home", "Inicio"], ["ruta", "route", "Ruta"], ["gestantes", "users", "Gestantes"], ["ayuda", "info", "Ayuda"]]
@@ -484,7 +539,10 @@ async function generarMensajes() {
   v.fase = "mensajes"; v.res = null; render();
   try {
     v.res = await api("/api/visita/mensajes", { method: "POST", body: JSON.stringify({ gestante_id: v.pid, campos: soloValores(v.campos), transcripcion: v.texto }) });
-  } catch (e) { v.fase = "ficha"; toast(e.message); }
+  } catch (e) {
+    if (!navigator.onLine) v.res = mensajesSinSenal(v);
+    else { v.fase = "ficha"; toast(e.message); }
+  }
   render();
 }
 
@@ -497,16 +555,144 @@ async function guardarVisita() {
     return;
   }
   try {
-    S.det = await api("/api/visita/guardar", { method: "POST", body: JSON.stringify({
+    const res = await api("/api/visita/guardar", { method: "POST", body: JSON.stringify({
       gestante_id: v.pid, campos: soloValores(v.campos), urgente: R.urgente, referencias: R.referencias,
       mensajes: R.mensajes, consentimiento: v.consentimiento ?? null,
       resumen: (v.fuente === "ia" && v.resumen) || R.referencias.join(" · ") || "Visita realizada sin hallazgos.",
       duracion_s: v.duracion ? Math.round(v.duracion) : v.seg || null }) });
     S.v = null;
+    if (res._sinSenal) { toast("Guardada sin señal. Se enviará cuando haya señal."); go("ficha", { pid: S.det.id }); return; }
+    S.det = res;
     await cargarLista();
     toast(R.urgente ? "Visita guardada · avisamos a la posta" : "Visita guardada");
     go("ficha", { pid: S.det.id });
   } catch (e) { toast(e.message); }
+}
+
+// ─────────────────────────────── acceso: activar celular, PIN y bloqueo
+function vAcceso() {
+  const a = S.acceso, primer = (ACC?.agente?.nombre || "").split(" ")[0];
+  const marca = `<div class="login-brand"><svg class="login-logo" viewBox="0 0 64 64" aria-hidden="true"><use href="#i-puriq"/></svg><b>puriq</b><span>rutas que cuidan</span></div>`;
+  const err = S.accErr ? `<p class="login-err" role="alert">${ic(IC.alerta)}<span>${esc(S.accErr)}</span></p>` : "";
+  if (a === "activar") {
+    return `<section class="login">${marca}<div class="login-card">
+      <span class="login-ic" aria-hidden="true">${ic("hosp")}</span>
+      <h1>Active su celular</h1><p class="muted">Escriba el código de 6 números que le dio la posta.</p>
+      <label class="sr" for="codigo">Código de activación</label>
+      <input id="codigo" class="code-input" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="······"${S.ocupado ? " disabled" : ""}>
+      ${err}<button class="big" data-acc="activar">${S.ocupado ? "Activando…" : "Activar"}</button>
+      <p class="login-hint">Demo: código <b>482913</b></p></div></section>`;
+  }
+  const msg = { crear: "Cree su clave de 4 números", confirmar: "Repita su clave", bloqueo: "Escriba su clave" }[a];
+  const dots = [0, 1, 2, 3].map((i) => `<i class="${i < S.pin.length ? "on" : ""}"></i>`).join("");
+  const teclas = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "", "0", "borrar"].map((k) => (k === "" ? "<span></span>"
+    : `<button class="key${k === "borrar" ? " del" : ""}" data-acc="tecla" data-k="${k}" aria-label="${k === "borrar" ? "Borrar" : k}">${k === "borrar" ? ic("back") : k}</button>`)).join("");
+  return `<section class="login">${marca}<div class="login-card">
+    <div class="login-av" aria-hidden="true">${esc(ACC?.agente?.iniciales || "")}</div>
+    <h1>Hola, ${esc(primer)}</h1><p class="muted">${msg}</p>
+    <div class="dots" role="status" aria-label="${S.pin.length} de 4 números">${dots}</div>
+    ${err}<div class="keypad">${teclas}</div>
+    ${a === "bloqueo" ? `<button class="link" data-acc="olvide">Olvidé mi clave</button>` : `<p class="login-hint">No la comparta. La usará cada vez que entre.</p>`}
+  </div></section>`;
+}
+
+async function hashPin(pin, salB64) {
+  const sal = Uint8Array.from(atob(salB64), (c) => c.charCodeAt(0));
+  const llave = await crypto.subtle.importKey("raw", new TextEncoder().encode(pin), "PBKDF2", false, ["deriveBits"]);
+  const bits = await crypto.subtle.deriveBits({ name: "PBKDF2", salt: sal, iterations: 150000, hash: "SHA-256" }, llave, 256);
+  return btoa(String.fromCharCode(...new Uint8Array(bits)));
+}
+
+async function accionAcceso(acc, k) {
+  if (acc === "bloquear") return bloquear();
+  if (acc === "olvide") {
+    if (confirm("Para volver a entrar necesitará un código nuevo de la posta. ¿Continuar?")) salir("Pida un código nuevo a la posta.");
+    return;
+  }
+  if (acc === "activar") {
+    const codigo = ($("#codigo")?.value || "").trim();
+    if (!/^\d{6}$/.test(codigo)) { S.accErr = "El código tiene 6 números."; return render(); }
+    S.ocupado = true; S.accErr = ""; render();
+    try {
+      const r = await api("/api/auth/activar", { method: "POST", body: JSON.stringify({ codigo }) });
+      ACC = { token: r.token, agente: r.agente, fallos: 0 }; guardarLS(AUTH_KEY, ACC);
+      S.acceso = "crear"; S.pin = "";
+    } catch (e) {
+      S.accErr = navigator.onLine ? e.message : "Necesita señal para activar (solo la primera vez).";
+    }
+    S.ocupado = false;
+    return render();
+  }
+  if (acc === "tecla") {
+    if (k === "borrar") S.pin = S.pin.slice(0, -1);
+    else if (S.pin.length < 4) S.pin += k;
+    S.accErr = ""; render();
+    if (S.pin.length === 4) await procesarPin();
+  }
+}
+
+async function procesarPin() {
+  const pin = S.pin; S.pin = "";
+  if (S.acceso === "crear") { S.pin1 = pin; S.acceso = "confirmar"; return render(); }
+  if (S.acceso === "confirmar") {
+    if (pin !== S.pin1) { S.acceso = "crear"; S.accErr = "No coinciden. Cree su clave otra vez."; return render(); }
+    const sal = btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(16))));
+    ACC.pin = { sal, hash: await hashPin(pin, sal) }; ACC.fallos = 0; S.pin1 = "";
+    guardarLS(AUTH_KEY, ACC);
+    return desbloquear();
+  }
+  // Desbloqueo: se verifica en el celular, sin señal.
+  if ((await hashPin(pin, ACC.pin.sal)) === ACC.pin.hash) { ACC.fallos = 0; guardarLS(AUTH_KEY, ACC); return desbloquear(); }
+  ACC.fallos = (ACC.fallos || 0) + 1; guardarLS(AUTH_KEY, ACC);
+  navigator.vibrate?.(200);
+  if (ACC.fallos >= MAX_FALLOS) return salir("5 intentos fallidos. Pida un código nuevo a la posta.");
+  S.accErr = `Clave incorrecta. Le quedan ${MAX_FALLOS - ACC.fallos} ${plural(MAX_FALLOS - ACC.fallos, "intento", "intentos")}.`;
+  render();
+}
+
+let ultimaActividad = Date.now();
+function desbloquear() {
+  S.acceso = null; S.accErr = ""; ultimaActividad = Date.now();
+  if (!S.meta) arrancarApp(); else { render(); enviarPendientes(); }
+}
+function bloquear() {
+  if (!ACC?.pin || S.v?.fase === "grabando") return; // no se corta una grabación en curso
+  S.acceso = "bloqueo"; S.pin = ""; S.accErr = ""; render();
+}
+function salir(msg) {
+  ACC = null;
+  try { localStorage.removeItem(AUTH_KEY); } catch (_) {}
+  Object.assign(S, { acceso: "activar", pin: "", accErr: msg || "", meta: null, lista: null, ruta: null, det: null, v: null });
+  render();
+}
+["pointerdown", "keydown", "touchstart", "scroll"].forEach((ev) =>
+  window.addEventListener(ev, () => { if (!S.acceso) ultimaActividad = Date.now(); }, { passive: true }));
+setInterval(() => { if (!S.acceso && Date.now() - ultimaActividad > BLOQUEO_MS) bloquear(); }, 15000);
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible" && !S.acceso && Date.now() - ultimaActividad > BLOQUEO_MS) bloquear();
+});
+document.addEventListener("keydown", (e) => {
+  if (!S.acceso) return;
+  if (S.acceso === "activar") { if (e.key === "Enter") accionAcceso("activar"); return; }
+  if (/^\d$/.test(e.key)) accionAcceso("tecla", e.key);
+  else if (e.key === "Backspace") accionAcceso("tecla", "borrar");
+});
+window.addEventListener("online", enviarPendientes);
+window.addEventListener("offline", () => { if (!S.acceso) render(); });
+
+function mensajesSinSenal(v) {
+  // Sin señal no hay servidor: se arma igual el aviso a la posta (SMS y llamada funcionan sin datos).
+  const g = S.det, num = (S.meta?.telefono_posta || "").replace("+", "");
+  const signos = Object.entries(v.campos.signos).filter(([, x]) => x.valor === "si").map(([k]) => S.cat.signos[k]);
+  const h = new Date(), hora = `${String(h.getHours()).padStart(2, "0")}:${String(h.getMinutes()).padStart(2, "0")}`;
+  const texto = `PURIQ - Signos de alarma. Gestante ${g.nombre}, ${g.mes} meses de embarazo, ${g.sector}. Signos: ${signos.map((x) => x.toLowerCase()).join("; ")}. Le dije que vaya hoy a la posta. Promotora ${(S.meta?.agente || "").split(" (")[0]}, ${hora}.`;
+  return {
+    sinSenal: true, urgente: signos.length > 0, mensajes: [], para_la_posta: [], cierre: "",
+    referencias: signos.length ? [`Presenta signos de alarma: ${signos.join("; ").toLowerCase()}`] : [],
+    trimestre: g.trimestre, semana: g.semana,
+    derivacion: signos.length ? { para: S.meta?.eess, texto, avisos: [],
+      whatsapp: `https://wa.me/${num}?text=${encodeURIComponent(texto)}`, sms: `sms:+${num}?body=${encodeURIComponent(texto)}`, tel: `tel:+${num}` } : null,
+  };
 }
 
 // ─────────────────────────────── eventos
@@ -518,13 +704,14 @@ function toast(msg, undo) {
 }
 
 document.addEventListener("click", async (e) => {
+  const ba = e.target.closest("[data-acc]");
+  if (ba) { await accionAcceso(ba.dataset.acc, ba.dataset.k); return; }
   // Aviso a la posta: el enlace abre WhatsApp, SMS o la app de llamadas del celular; aquí solo se registra.
   const av = e.target.closest("[data-aviso]");
   if (av && S.v?.res?.derivacion) {
     const canal = av.dataset.aviso, d = S.v.res.derivacion;
     const cuerpo = JSON.stringify({ gestante_id: S.v.pid, canal });
-    if (!(navigator.sendBeacon && navigator.sendBeacon("/api/visita/aviso", new Blob([cuerpo], { type: "application/json" }))))
-      fetch("/api/visita/aviso", { method: "POST", headers: { "Content-Type": "application/json" }, body: cuerpo, keepalive: true }).catch(() => {});
+    api("/api/visita/aviso", { method: "POST", body: cuerpo, keepalive: true }).catch(() => {});
     const h = new Date();
     d.avisos = [...(d.avisos || []), { canal, hora: `${String(h.getHours()).padStart(2, "0")}:${String(h.getMinutes()).padStart(2, "0")}` }];
     S.v.error = "";
@@ -542,14 +729,18 @@ document.addEventListener("click", async (e) => {
   else if (a === "jornada") { S.jornada = Number(b.dataset.min); S.ruta = await api(`/api/ruta?jornada=${S.jornada}&hora=${horaAhora()}`); render(); }
   else if (a === "plan") {
     const marcados = [...document.querySelectorAll("[data-plan]:checked")].map((x) => x.dataset.plan);
-    S.det = await api(`/api/gestantes/${S.det.id}/plan-parto`, { method: "POST", body: JSON.stringify({ marcados }) });
+    const res = await api(`/api/gestantes/${S.det.id}/plan-parto`, { method: "POST", body: JSON.stringify({ marcados }) });
+    if (res._sinSenal) { S.det.plan_parto.marcados = marcados; render(); toast("Guardado sin señal. Se enviará después."); return; }
+    S.det = res;
     render(); cargarLista();
     const falta = S.det.plan_parto.total - S.det.plan_parto.marcados.length;
     toast(falta ? `Guardado · faltan ${falta}` : "Plan de parto completo");
   }
   else if (a === "entregar") {
     const sid = b.dataset.sid, gid = S.det.id;
-    S.det = await api(`/api/gestantes/${gid}/servicios/${sid}`, { method: "POST", body: JSON.stringify({}) });
+    const res = await api(`/api/gestantes/${gid}/servicios/${sid}`, { method: "POST", body: JSON.stringify({}) });
+    if (res._sinSenal) { const sv = S.det.servicios.find((x) => x.id === sid); if (sv) sv.estado = "rec"; render(); toast("Guardado sin señal. Se enviará después."); return; }
+    S.det = res;
     render(); cargarLista();
     toast("Marcado como recibido", async () => { S.det = await api(`/api/gestantes/${gid}/servicios/${sid}`, { method: "DELETE" }); render(); cargarLista(); });
   }
@@ -561,7 +752,7 @@ document.addEventListener("click", async (e) => {
     try {
       v.consentimiento = true;
       const ej = await api("/api/demo/ejemplo");
-      if (ej.audio) procesarAudio(await (await fetch(ej.audio)).blob());
+      if (ej.audio) procesarAudio(await (await fetch(ej.audio, { headers: { "X-Token": ACC?.token || "" } })).blob());
       else { v.texto = ej.texto; llenar(); }
     } catch (err) { v.error = err.message; render(); }
   }
@@ -590,13 +781,21 @@ document.addEventListener("input", (e) => {
 });
 window.addEventListener("hashchange", route);
 
-(async function init() {
+async function arrancarApp() {
   try {
     [S.meta, S.cat] = await Promise.all([api("/api/estado"), api("/api/ficha3/catalogo")]);
     await cargarLista();
   } catch (e) {
-    main.innerHTML = `<div class="empty">No se pudo conectar con el servidor. ${esc(e.message)}</div>`;
+    main.innerHTML = `<div class="empty">Sin señal y todavía no hay datos guardados en este celular. Conéctese una vez para descargarlos.</div>`;
     return;
   }
   route();
+  enviarPendientes();
+}
+
+(function init() {
+  if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+  Object.assign(S, { pin: "", pin1: "", accErr: "", ocupado: false });
+  S.acceso = !ACC?.token ? "activar" : !ACC.pin ? "crear" : "bloqueo";
+  render();
 })();

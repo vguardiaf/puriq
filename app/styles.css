@@ -274,3 +274,33 @@ a.ghost{display:flex;align-items:center;justify-content:center}
 .big.wa-btn{background:#128C7E}
 .ok-aviso{display:flex;gap:8px;align-items:center;margin:0;font-weight:700;color:var(--grn-ink);background:var(--grn-bg);border-radius:12px;padding:8px 12px}
 .deriv .wa-bubble{align-self:stretch;max-width:100%}
+
+/* acceso: activar, PIN y bloqueo */
+main:has(.login){padding:0;gap:0}
+.login{min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;align-items:center;gap:22px;padding:44px 16px 28px;background:var(--accent)}
+.login-brand{display:flex;flex-direction:column;align-items:center;color:#fff}
+.login-logo{width:76px;height:76px;border-radius:22px;box-shadow:0 0 0 4px rgba(255,255,255,.22)}
+.login-brand b{font-size:34px;line-height:1.1;margin-top:10px;letter-spacing:-.01em}
+.login-brand span{font-size:15px;opacity:.85}
+.login-card{width:100%;max-width:380px;background:var(--surface);border-radius:28px;padding:26px 20px 22px;display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center;box-shadow:0 14px 40px rgba(0,0,0,.2)}
+.login-card h1{margin:0;font-size:26px;line-height:1.15}
+.login-card .muted{font-size:16px}
+.login-ic{width:56px;height:56px;border-radius:18px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent)}
+.login-ic .ic{width:30px;height:30px}
+.login-av{width:76px;height:76px;border-radius:50%;display:grid;place-items:center;font-size:28px;font-weight:700;background:var(--accent-soft);color:var(--accent);border:3px solid var(--accent)}
+.dots{display:flex;gap:18px;margin:6px 0 4px}
+.dots i{width:18px;height:18px;border-radius:50%;border:2.5px solid var(--accent);transition:background .1s}
+.dots i.on{background:var(--accent)}
+.keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:100%;max-width:300px;margin-top:4px}
+.key{height:66px;border:0;border-radius:20px;background:var(--soft);font-size:28px;font-weight:700;color:var(--ink);display:grid;place-items:center}
+.key:active{background:var(--accent-soft);transform:scale(.97)}
+.key.del{background:none;color:var(--muted)}
+.key.del .ic{width:30px;height:30px}
+.code-input{width:100%;max-width:290px;height:66px;border:2px solid var(--line);border-radius:18px;text-align:center;font-size:32px;font-weight:700;letter-spacing:.32em;background:var(--soft);padding-left:.32em}
+.code-input:focus{border-color:var(--accent);outline:none;box-shadow:0 0 0 4px var(--accent-soft)}
+.login-err{display:flex;gap:8px;align-items:center;margin:0;color:var(--red-ink);font-weight:700;text-align:left}
+.login-hint{margin:2px 0 0;font-size:14px;color:var(--muted);background:var(--soft);border-radius:999px;padding:5px 14px}
+.lockbtn{border:0;background:var(--soft);color:var(--muted);width:44px;height:44px;border-radius:12px;display:grid;place-items:center;flex:none}
+.lockbtn .ic{width:22px;height:22px}
+.senal{margin-left:auto}
+[hidden]{display:none!important}

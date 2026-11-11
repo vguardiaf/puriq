@@ -8,4 +8,5 @@ await build({ entryPoints: ["app/app.js", "app/styles.css"], outdir: "app/dist",
 const html = readFileSync("app/index.html", "utf8").replace(/\n\s+/g, "\n");
 writeFileSync("app/dist/index.html", html);
 copyFileSync("app/favicon.svg", "app/dist/favicon.svg");
+copyFileSync("app/sw.js", "app/dist/sw.js");
 console.log("app/dist listo");
