@@ -1,12 +1,12 @@
 /* Puriq Lite: app móvil de una columna.
-   Color = estado (semáforo) + icono + texto. Tipografía Atkinson Hyperlegible. Una tinta de marca (azul). */
+   Color = estado (semáforo) + icono + texto. Tipografía Atkinson Hyperlegible. Marca petróleo, acciones turquesa, acento coral. */
 :root{
-  --bg:#F6F2E8; --surface:#FFFFFF; --soft:#EFE9DC; --ink:#26352F; --muted:#5D6A63; --line:#E2DACB;
-  --accent:#245A45; --accent-soft:#E2ECE5;
+  --bg:#F6F9FA; --surface:#FFFFFF; --soft:#EAF1F3; --ink:#253746; --muted:#5A6B78; --line:#DCE5E8;
+  --nav:#164E63; --accent:#087F8C; --accent-soft:#E3F4F1; --mint:#BCE8DF; --coral:#E77968;
   --red:#E59A90; --red-bg:#FCEBE8; --red-ink:#8E3B30; --red-strong:#B5473A;
   --amb:#EDC35F; --amb-bg:#FDF4DC; --amb-ink:#765410;
   --grn:#9BC79A; --grn-bg:#EBF5E8; --grn-ink:#35603B;
-  --done:#4D8290; --done-bg:#E3EEF0; --done-ink:#2C5560;
+  --done:#6CC3B2; --done-bg:#E3F4F1; --done-ink:#0B5A63;
   --fut:#8A92A3; --fut-bg:#F1F3F7; --fut-ink:#4A5364;
   --violet:#5B4BC4; --violet-bg:#EEEBFB; --violet-ink:#352A86;
   --shadow:0 1px 2px rgba(23,32,46,.06),0 6px 20px rgba(23,32,46,.06);
@@ -23,7 +23,7 @@ button{cursor:pointer}
 .skip:focus{left:8px}
 .app{max-width:480px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;background:var(--bg)}
 @media (min-width:700px){
-  body{padding-block:20px;background:#E9E2D2}
+  body{padding-block:20px;background:#E1EAED}
   .app{min-height:calc(100vh - 40px);border:1px solid var(--line);border-radius:28px;box-shadow:var(--shadow);overflow:clip}
 }
 .pad{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
@@ -31,7 +31,7 @@ button{cursor:pointer}
 
 /* encabezado */
 .top{position:sticky;top:0;z-index:500;background:var(--surface);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;min-height:60px;padding-block:8px}
-.brand{display:flex;align-items:center;gap:8px;font-weight:700;color:var(--accent);font-size:22px;letter-spacing:-.01em;min-width:0;white-space:nowrap}
+.brand{display:flex;align-items:center;gap:8px;font-weight:700;color:var(--nav);font-size:22px;letter-spacing:-.01em;min-width:0;white-space:nowrap}
 @media (max-width:380px){.brand{font-size:21px;gap:8px}.tag-mock{font-size:11px;padding:3px 7px}}
 .logo{width:34px;height:34px;flex:none;display:block}
 .logo .ic{width:20px;height:20px}
@@ -65,7 +65,7 @@ main{flex:1;padding-block:16px 28px;display:flex;flex-direction:column;gap:16px;
 .empty{background:var(--surface);border:1px dashed var(--line);border-radius:16px;padding:22px;text-align:center;color:var(--muted)}
 
 /* llamada principal: ruta de hoy */
-.cta{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:14px;width:100%;text-align:left;border:0;border-radius:22px;padding:16px;background:var(--accent);color:#fff;box-shadow:0 8px 24px rgba(36,90,69,.28);min-height:92px}
+.cta{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:14px;width:100%;text-align:left;border:0;border-radius:22px;padding:16px;background:var(--accent);color:#fff;box-shadow:0 8px 24px rgba(8,127,140,.28);min-height:92px}
 .cta .ci{width:52px;height:52px;border-radius:16px;background:rgba(255,255,255,.16);display:grid;place-items:center}
 .cta .ci .ic{width:28px;height:28px}
 .cta b{display:block;font-size:20px;line-height:1.15}
@@ -160,7 +160,7 @@ main{flex:1;padding-block:16px 28px;display:flex;flex-direction:column;gap:16px;
 .save{display:flex;gap:8px;align-items:center;font-size:15px;color:var(--grn-ink);background:var(--grn-bg);border-radius:12px;padding:8px 12px;font-weight:700}
 #map{height:340px;border-radius:18px;border:1px solid var(--line);overflow:hidden;z-index:1;background:#dfe6ee}
 .leaflet-container{font-family:var(--font)}
-.mk{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:14px;color:#26352F;border:2.5px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.35)}
+.mk{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:14px;color:#253746;border:2.5px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.35)}
 .mk.start{background:var(--ink);border-radius:9px}
 .stops{display:flex;flex-direction:column;margin:0;padding:0;list-style:none}
 .stop{display:grid;grid-template-columns:40px 1fr;gap:12px;position:relative;padding-bottom:14px}
@@ -245,7 +245,7 @@ textarea{min-height:110px;resize:vertical}
 .hb ul.pkg{list-style:none;padding:0;gap:0}
 .pkg li{display:flex;justify-content:space-between;gap:8px;padding:7px 0;border-bottom:1px solid var(--line);font-size:15px}
 .pkg li b{white-space:nowrap;color:var(--muted)}
-.pkg li.hl{color:var(--amb-ink);font-weight:700}
+.pkg li.hl{color:var(--accent);font-weight:700}
 .svc .ptag{display:inline-flex;align-items:center;gap:4px}
 .ptag .ic{width:14px;height:14px}
 .tile{min-height:88px;gap:4px;padding:10px 8px}
@@ -277,7 +277,7 @@ a.ghost{display:flex;align-items:center;justify-content:center}
 
 /* acceso: activar, PIN y bloqueo */
 main:has(.login){padding:0;gap:0}
-.login{min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;align-items:center;gap:22px;padding:44px 16px 28px;background:var(--accent)}
+.login{min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;align-items:center;gap:22px;padding:44px 16px 28px;background:var(--nav)}
 .login-brand{display:flex;flex-direction:column;align-items:center;color:#fff}
 .login-logo{width:76px;height:76px;border-radius:22px;box-shadow:0 0 0 4px rgba(255,255,255,.22)}
 .login-brand b{font-size:34px;line-height:1.1;margin-top:10px;letter-spacing:-.01em}

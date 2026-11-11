@@ -408,7 +408,7 @@ function dibujarMapa() {
   const pts = [[R.inicio.lat, R.inicio.lon], ...R.paradas.map((p) => [p.lat, p.lon])];
   mapa.fitBounds(pts.length > 1 ? pts : R.geo.casas.features.map((f) => [f.geometry.coordinates[1], f.geometry.coordinates[0]]), { padding: [28, 28] });
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: "© OpenStreetMap" }).addTo(mapa);
-  L.geoJSON(R.geo.ruta, { style: { color: "#245A45", weight: 4, dashArray: "8 8", opacity: 0.85 } }).addTo(mapa);
+  L.geoJSON(R.geo.ruta, { style: { color: "#164E63", weight: 4, dashArray: "8 8", opacity: 0.85 } }).addTo(mapa);
   R.geo.casas.features.forEach((f) => {
     const p = f.properties, [lon, lat] = f.geometry.coordinates, col = NIVEL[p.nivel].color;
     const pop = `<b>${esc(p.nombre)}</b><br>${NIVEL[p.nivel].t}${p.orden ? ` · parada ${p.orden}` : ""}`;
@@ -416,7 +416,7 @@ function dibujarMapa() {
       L.marker([lat, lon], { icon: L.divIcon({ className: "", html: `<span class="mk" style="background:${col}">${p.orden}</span>`, iconSize: [30, 30], iconAnchor: [15, 15] }), title: p.nombre, zIndexOffset: 500 })
         .addTo(mapa).bindPopup(pop);
     } else {
-      L.circleMarker([lat, lon], { radius: 7, color: "#26352F", weight: 1.5, fillColor: col, fillOpacity: 0.9 }).addTo(mapa).bindPopup(pop);
+      L.circleMarker([lat, lon], { radius: 7, color: "#253746", weight: 1.5, fillColor: col, fillOpacity: 0.9 }).addTo(mapa).bindPopup(pop);
     }
   });
   L.marker([R.inicio.lat, R.inicio.lon], { icon: L.divIcon({ className: "", html: `<span class="mk start">${ic("hosp")}</span>`, iconSize: [30, 30], iconAnchor: [15, 15] }), title: R.inicio.nombre })
