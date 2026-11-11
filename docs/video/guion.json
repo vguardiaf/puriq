@@ -1,0 +1,18 @@
+{
+  "escenas": [
+    {"id": "acceso", "titulo": "Entra sin contraseñas",
+     "frase": "Ella es Rosa, promotora de salud en Quinua, Ayacucho. Entra a Puriq con una clave de cuatro números, incluso sin señal."},
+    {"id": "inicio", "titulo": "Todas sus gestantes, de un vistazo",
+     "frase": "Al entrar ve a sus veintiséis gestantes: catorce con servicios pendientes, once a las que les toca pronto, y cuántas visitó este mes."},
+    {"id": "ruta", "titulo": "La ruta del día",
+     "frase": "Con un toque, Puriq arma la ruta del día. Ordena las visitas por urgencia y distancia, según el tiempo que tiene, y las muestra en el mapa."},
+    {"id": "ficha", "titulo": "Qué le falta a cada una",
+     "frase": "En la ficha de cada gestante ve qué servicios del paquete ya recibió y cuáles le faltan."},
+    {"id": "grabar", "titulo": "Graba la visita, la IA llena la Ficha 3",
+     "frase": "En la casa, y con su permiso, graba la conversación. La inteligencia artificial pasa la voz a texto y llena la Ficha tres: suplementos, por qué no los toma, signos de alarma y hábitos."},
+    {"id": "alarma", "titulo": "Avisa a la posta al instante",
+     "frase": "Si encuentra un signo de alarma, como visión borrosa o hinchazón, le pide avisar a la posta por WhatsApp, mensaje de texto o llamada, desde su propio celular."},
+    {"id": "cierre", "titulo": "Qué decirle, en palabras simples",
+     "frase": "Y le sugiere qué decirle según sus meses de embarazo. Puriq: para que ninguna gestante se quede sin sus servicios."}
+  ]
+}
