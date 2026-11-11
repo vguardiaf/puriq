@@ -1,6 +1,6 @@
 # Conversación 2 · Consultora en desarrollo infantil temprano (UNICEF)
 
-- **Fecha:** noviembre de 2026
+- **Fecha:** 09 de noviembre de 2026
 - **Rol:** consultora especialista en desarrollo infantil temprano (DIT) de UNICEF
 - **Lugar:** Lima
 - **Canal:** reunión de revisión del prototipo

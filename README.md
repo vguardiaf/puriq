@@ -55,7 +55,7 @@ Cómo cubro cada frente con agentes de IA:
 
 **Cómo lo resuelven hoy:** papel, memoria y WhatsApp. La ruta se arma "por cercanía" y no por urgencia; las fichas se pasan días después y con errores; cuando el agente detecta un signo de alarma, avisar al establecimiento depende de que tenga saldo y el número a la mano.
 
-**Cuánto cuesta:** cada promotora sigue de 6 a 30 familias, a veces a horas de camino o en bote. Sin internet, **la visita se hace pero el registro se pierde**: no se sincroniza a tiempo. Las apps para madres no se usan por falta de señal y por celulares sin espacio. Los cambios de la norma técnica dejan **2 a 3 meses sin contacto** con la posta. Y los espacios de vigilancia comunitaria **cierran en menos de un mes** cuando no tienen herramientas ni acompañamiento. Lo que se pierde es la gestante a la que le faltaba un servicio y nadie lo supo a tiempo.
+**Cuánto cuesta:** cada promotora sigue de 6 a 30 familias, a veces a horas de camino o en bote. Sin internet, **la visita se hace pero el registro se pierde**: no se sincroniza a tiempo. Las apps para madres no se usan por falta de señal y por celulares sin espacio, y algunos promotores mayores necesitan acompañamiento para usar la tecnología. Lo que se pierde es la gestante a la que le faltaba un servicio y nadie lo supo a tiempo.
 
 **Evidencia:** [`docs/research/`](docs/research/) tiene las notas de tres fuentes:
 - los diagnósticos territoriales con coordinadores de vigilancia comunitaria en 5 ámbitos de Ayacucho, Huancavelica y Cusco;
@@ -122,17 +122,20 @@ pytest -q                                         # 10 pruebas
 
 - `python scripts/generar_datos.py` regenera las 26 gestantes ficticias.
 - `npm install && npm run build` publica el frontend minificado en `app/dist/`.
-- **Hugging Face Spaces:** crear un Space con SDK Docker, subir el repo y añadir `ANTHROPIC_API_KEY` en *Settings → Secrets*. El `Dockerfile` ya descarga Whisper durante el build.
+- **Render (plan gratis, opcional):** *New → Blueprint →* este repositorio. [`render.yaml`](render.yaml) usa Whisper `tiny` (cabe en 512 MB) y genera la clave secreta. `ANTHROPIC_API_KEY` se agrega en *Environment*.
 
 ## 7. Modelo de negocio
 
 **Quién paga:** las **municipalidades distritales** (las visitas de actores sociales cuentan para metas del Programa de Incentivos a la Mejora de la Gestión Municipal) y las **empresas y ONG** con programas sociales en sus zonas de influencia. El agente no paga.
 
-| Plan | Precio | Incluye |
+**Precio por cliente** (una municipalidad, empresa u ONG):
+
+| Concepto | Precio | Incluye |
 |---|---|---|
-| **Lite** | Gratis | 1 agente, gestantes, ruta, mapa y Ficha 3 con voz |
-| **Municipal** | **S/ 25 por agente al mes** (mínimo 10 agentes) | Todo lo anterior + panel del establecimiento y exportación para el aplicativo |
-| **Empresa / ONG** | **S/ 40 por agente al mes** | + niñas y niños (CRED), reportes de impacto y soporte |
+| **Implementación inicial** | **S/ 5 000** (pago único) | Capacitación de promotoras y personal de la posta, configuración (sectores, padrón de gestantes, posta de referencia) y adaptación al territorio |
+| **Uso mensual** | **S/ 1 500 al mes** | App para sus promotoras (gestantes, ruta, mapa, Ficha 3 con voz, avisos a la posta), servidor, actualizaciones y soporte |
+
+La versión **Lite** de este repositorio es una demo gratuita con datos ficticios.
 
 **Costo por agente al mes** (estimado con unas 25 visitas al mes):
 
@@ -143,7 +146,7 @@ pytest -q                                         # 10 pruebas
 | Servidor (VM de ~US$ 30 al mes para ~100 agentes) | ~US$ 0,30 | ~US$ 0,30 |
 | **Total** | **~US$ 1,80 (≈ S/ 7)** | **~US$ 0,35 (≈ S/ 1,3)** |
 
-**Margen de contribución:** con el plan Municipal (S/ 25), de **~S/ 18 por agente** con Opus a **~S/ 23** con Haiku.
+**Margen de contribución:** un cliente con 20 promotoras cuesta unos **S/ 140 al mes** con Opus (S/ 26 con Haiku). Con S/ 1 500 al mes, el margen es de **~S/ 1 360 al mes (~90 %)** por cliente. El primer año, cada cliente aporta **S/ 23 000** (S/ 5 000 + 12 × S/ 1 500).
 
 ## 8. Herramientas del curso
 

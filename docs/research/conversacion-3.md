@@ -1,6 +1,6 @@
 # Conversación 3 · Consultora en desarrollo infantil temprano
 
-- **Fecha:** noviembre de 2026
+- **Fecha:** 09 de noviembre de 2026
 - **Rol:** consultora especialista en desarrollo infantil temprano (DIT)
 - **Lugar:** Lima
 - **Canal:** entrevista
