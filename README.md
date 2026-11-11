@@ -1,14 +1,3 @@
----
-title: Puriq
-emoji: 🚶
-colorFrom: blue
-colorTo: green
-sdk: docker
-app_port: 7860
-pinned: false
-license: other
----
-
 <p align="center"><img src="docs/logo/puriq-logo-color.svg" alt="Puriq: rutas que cuidan" width="360"></p>
 
 # Puriq · rutas que cuidan
@@ -34,9 +23,9 @@ Hacemos **la ruta y el registro de visitas domiciliarias** para **los agentes co
 
 ## 2. Founder
 
-**Víctor Guardia Fiestas** · `[EDITAR: foto en docs/founder.jpg]`
+**Víctor Guardia Fiestas** ·
 
-`[EDITAR: una línea sobre ti.]` Trabajé en el diagnóstico y diseño de la vigilancia comunitaria del programa *Creciendo Juntos*, donde vi de cerca cómo los agentes comunitarios llenan fichas en papel, arman su ruta de memoria y se enteran tarde de los servicios vencidos.
+Politólogo con más de 10 años de experiencia en el sector público. Trabajé en el diagnóstico y diseño de la vigilancia comunitaria del programa *Creciendo Juntos*, donde vi de cerca cómo los agentes comunitarios llenan fichas en papel, arman su ruta de memoria y se enteran tarde de los servicios vencidos.
 
 Cómo cubro cada frente con agentes de IA:
 - **Producto:** defino el problema, las reglas (norma técnica) y el flujo; Claude Code me ayuda a bajarlo a historias concretas.
@@ -86,10 +75,6 @@ Cómo cubro cada frente con agentes de IA:
 ## 6. Demo
 
 **Demo:** en local desde la laptop · **Plan B:** [video de 66 s](docs/video/puriq_demo.mp4).
-
-| Inicio y alertas de servicios | Ruta y mapa | Aviso a la posta: WhatsApp, SMS o llamada |
-|---|---|---|
-| ![Inicio](docs/capturas/1-inicio.jpg) | ![Ruta](docs/capturas/2-ruta-mapa.jpg) | ![Visita](docs/capturas/3-visita-mensajes.jpg) |
 
 ### Arquitectura
 
