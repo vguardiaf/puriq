@@ -55,9 +55,12 @@ Cómo cubro cada frente con agentes de IA:
 
 **Cómo lo resuelven hoy:** papel, memoria y WhatsApp. La ruta se arma "por cercanía" y no por urgencia; las fichas se pasan días después y con errores; cuando el agente detecta un signo de alarma, avisar al establecimiento depende de que tenga saldo y el número a la mano.
 
-**Cuánto cuesta:** `[EDITAR con lo que te dijeron tus 3 usuarios: horas al mes en llenar y pasar fichas, visitas vencidas, servicios que se pierden, derivaciones tardías.]`
+**Cuánto cuesta:** cada promotora sigue de 6 a 30 familias, a veces a horas de camino o en bote. Sin internet, **la visita se hace pero el registro se pierde**: no se sincroniza a tiempo. Las apps para madres no se usan por falta de señal y por celulares sin espacio. Los cambios de la norma técnica dejan **2 a 3 meses sin contacto** con la posta. Y los espacios de vigilancia comunitaria **cierran en menos de un mes** cuando no tienen herramientas ni acompañamiento. Lo que se pierde es la gestante a la que le faltaba un servicio y nadie lo supo a tiempo.
 
-**Evidencia:** notas de 3 conversaciones con usuarios potenciales en [`docs/research/`](docs/research/).
+**Evidencia:** [`docs/research/`](docs/research/) tiene las notas de tres fuentes:
+- los diagnósticos territoriales con coordinadores de vigilancia comunitaria en 5 ámbitos de Ayacucho, Huancavelica y Cusco;
+- una consultora en desarrollo infantil temprano de UNICEF (diseño, plan de parto y lenguaje sencillo);
+- una consultora en desarrollo infantil temprano (seguimiento nominal del paquete priorizado).
 
 ## 4. Solución e insight
 
