@@ -15,8 +15,6 @@
 **Territorio y carga de trabajo**
 - Una promotora atiende entre 6 y 30 familias, con promedios de 14 a 26. Por lo general hay **una promotora por localidad**, que vive en el barrio que atiende. Las listas se arman por barrio de residencia de la promotora y luego por la **lista nominal del establecimiento de salud**.
 - Las distancias son muy grandes:
-  - Entre comunidades: San Martín está a unas 5 horas de la capital de provincia, y en el Bajo Urubamba se viaja solo en bote, hasta 8 horas.
-  - Dentro de una misma comunidad: en Shimá, hasta 3 horas a pie.
   - Los coordinadores viajan muchas veces de noche para ganar tiempo. **Planificar la ruta del día es una necesidad real.**
 - Cada hogar recibe una visita presencial al mes, más una llamada de seguimiento. A las gestantes de alto riesgo o que fueron derivadas se les hacen visitas adicionales.
 

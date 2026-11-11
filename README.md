@@ -161,27 +161,9 @@ La versión **Lite** de este repositorio es una demo gratuita con datos ficticio
 **Claude Code** (como co-founder técnico) generó la mayor parte del código a partir de mis instrucciones y del mockup *Creciendo Juntos* que diseñamos antes:
 - El backend en FastAPI, el portado de las reglas del semáforo, el algoritmo de prioridad y ruta, la integración con Whisper y con la API de Claude, el respaldo por palabras clave y las pruebas.
 - El frontend móvil (vistas, grabación con `MediaRecorder`, mapa) siguiendo el sistema visual del mockup.
-- Los datos ficticios, el audio de ejemplo (voz sintética de Windows), el Dockerfile y este README.
+- Los datos ficticios, el audio de ejemplo (voz sintética de Windows) y el Dockerfile.
 
 **Lo que hice yo:** definí el problema y el usuario; elegí el alcance Lite (solo gestantes); decidí qué campos de la Ficha 3 se graban y que los mensajes se elijan por reglas y no por la IA; revisé las reglas contra la norma y probé el flujo completo.
-
----
-
-## Opcional: lo que viene
-
-- **Competencia:** papel y Excel (lo de hoy), WhatsApp, el aplicativo oficial de visitas (solo registra; no prioriza ni ayuda en la visita), y "no hacer nada".
-- **Primeros usuarios:** 10 agentes de un distrito piloto (Quinua u otro con programa social activo) → 100 con una municipalidad y una empresa → 1 000 con una red de municipalidades o un gobierno regional.
-- **Plan:** 3 meses, piloto real con consentimiento; 6 meses, modo sin conexión y quechua; 12 meses, niñas y niños (CRED) y panel del establecimiento.
-- **Riesgos:** (1) privacidad de datos de salud, que se mitiga procesando el audio en el servidor y con consentimiento informado; (2) errores de la IA, que se mitigan porque el agente revisa cada campo y los mensajes salen de reglas; (3) conectividad en anexos alejados, que se resuelve con el modo sin conexión de la versión completa.
-
-## Acceso de la promotora
-
-- **La posta la activa:** le entrega un código de 6 números (demo: `482913`). Con él se activa su celular una sola vez. No hay correo ni contraseña.
-- **Clave de 4 números** en un teclado grande. Se verifica en el celular, sin señal, y nunca viaja al servidor; solo se guarda su huella cifrada (PBKDF2).
-- **Saludo con su nombre** ("Hola, Rosa") para confirmar que es su cuenta.
-- **Se bloquea sola a los 7 minutos** sin uso (no corta una grabación) y con el candado de la cabecera. **5 intentos fallidos** borran el acceso y hay que pedir un código nuevo a la posta.
-- **Sin señal:** la app y los últimos datos quedan en el celular; marcar servicios, el plan de parto, los avisos y las visitas se guardan y se envían solos cuando vuelve la señal.
-- **La posta puede desactivar un celular** perdido o de una promotora que se retira.
 
 ## Seguridad
 
