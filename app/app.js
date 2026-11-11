@@ -79,11 +79,11 @@ function estadoSenal() {
 // Íconos estándar: un solo ícono por concepto en toda la app.
 const IC = { alerta: "alert", recordatorio: "bell", perdido: "x", recibido: "check", futuro: "cal", visita: "clock", derivacion: "hosp", aldia: "check" };
 const NIVEL = {
-  alerta: { t: "Alerta", i: IC.alerta, color: "#B97F00" },
+  alerta: { t: "Alerta", i: IC.alerta, color: "#D98267" },
   seguimiento: { t: "¿Fue a la posta?", i: IC.derivacion, color: "#5B4BC4" },
-  vencida: { t: "Visita vencida", i: IC.visita, color: "#D12F2F" },
-  toca: { t: "Le toca visita", i: IC.visita, color: "#2B8E4E" },
-  recomendada: { t: "Le toca pronto", i: IC.recordatorio, color: "#2B8E4E" },
+  vencida: { t: "Visita vencida", i: IC.visita, color: "#B5473A" },
+  toca: { t: "Le toca visita", i: IC.visita, color: "#6E9B70" },
+  recomendada: { t: "Le toca pronto", i: IC.recordatorio, color: "#6E9B70" },
   al_dia: { t: "Al día", i: IC.aldia, color: "#8A92A3" },
 };
 const BUCKET = { amar: ["Con alertas", IC.alerta], verde: ["Le toca pronto", IC.recordatorio], ok: ["Al día", IC.aldia] };
@@ -353,8 +353,9 @@ function vAyuda() {
   const box = (icon, t, body) => `<details class="card fold"><summary><span class="dot st-recomendada">${ic(icon)}</span><h2>${t}</h2></summary><div class="hb">${body}</div></details>`;
   const mes = (s) => (s.desde === s.hasta ? `Mes ${s.desde}` : `Mes ${s.desde} a ${s.hasta}`);
   const porMes = {};
-  (cat.paquete || []).forEach((s) => (porMes[mes(s)] = porMes[mes(s)] || []).push(s.nombre));
-  const paquete = Object.entries(porMes).map(([m, n]) => `<li${n.includes("Plan de parto") ? ' class="hl"' : ""}><b>${m}</b><span>${esc(n.join(" · "))}</span></li>`).join("");
+  const sumar = (m, n) => (porMes[m] = porMes[m] || []).push(n);
+  (cat.paquete || []).forEach((s) => (s.id === "plan" ? [7, 8, 9].forEach((m) => sumar(`Mes ${m}`, "Revisión de plan de parto")) : sumar(mes(s), s.nombre)));
+  const paquete = Object.entries(porMes).map(([m, n]) => `<li${n.includes("Revisión de plan de parto") ? ' class="hl"' : ""}><b>${m}</b><span>${esc(n.join(" · "))}</span></li>`).join("");
   const colores = COLORES.map(([k, t, d]) => `<div class="lg st-${k}"><span class="dot">${ic(ICON[k])}</span><div><b>${t}</b>${d}</div></div>`).join("");
   const signos = Object.values(cat.signos || {}).map((s) => `<li>${esc(s)}</li>`).join("");
   return `
@@ -407,7 +408,7 @@ function dibujarMapa() {
   const pts = [[R.inicio.lat, R.inicio.lon], ...R.paradas.map((p) => [p.lat, p.lon])];
   mapa.fitBounds(pts.length > 1 ? pts : R.geo.casas.features.map((f) => [f.geometry.coordinates[1], f.geometry.coordinates[0]]), { padding: [28, 28] });
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: "© OpenStreetMap" }).addTo(mapa);
-  L.geoJSON(R.geo.ruta, { style: { color: "#1F4E8C", weight: 4, dashArray: "8 8", opacity: 0.85 } }).addTo(mapa);
+  L.geoJSON(R.geo.ruta, { style: { color: "#245A45", weight: 4, dashArray: "8 8", opacity: 0.85 } }).addTo(mapa);
   R.geo.casas.features.forEach((f) => {
     const p = f.properties, [lon, lat] = f.geometry.coordinates, col = NIVEL[p.nivel].color;
     const pop = `<b>${esc(p.nombre)}</b><br>${NIVEL[p.nivel].t}${p.orden ? ` · parada ${p.orden}` : ""}`;
@@ -588,8 +589,7 @@ function vAcceso() {
   const teclas = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "", "0", "borrar"].map((k) => (k === "" ? "<span></span>"
     : `<button class="key${k === "borrar" ? " del" : ""}" data-acc="tecla" data-k="${k}" aria-label="${k === "borrar" ? "Borrar" : k}">${k === "borrar" ? ic("back") : k}</button>`)).join("");
   return `<section class="login">${marca}<div class="login-card">
-    <div class="login-av" aria-hidden="true">${esc(ACC?.agente?.iniciales || "")}</div>
-    <h1>Hola, ${esc(primer)}</h1><p class="muted">${msg}</p>
+    <h1>Hola, ${esc(primer)}</h1><p class="muted" aria-live="polite">${S.verificando ? "Verificando…" : msg}</p>
     <div class="dots" role="status" aria-label="${S.pin.length} de 4 números">${dots}</div>
     ${err}<div class="keypad">${teclas}</div>
     ${a === "bloqueo" ? `<button class="link" data-acc="olvide">Olvidé mi clave</button>` : `<p class="login-hint">No la comparta. La usará cada vez que entre.</p>`}
@@ -624,6 +624,7 @@ async function accionAcceso(acc, k) {
     return render();
   }
   if (acc === "tecla") {
+    if (S.verificando) return;
     if (k === "borrar") S.pin = S.pin.slice(0, -1);
     else if (S.pin.length < 4) S.pin += k;
     S.accErr = ""; render();
@@ -632,10 +633,13 @@ async function accionAcceso(acc, k) {
 }
 
 async function procesarPin() {
-  const pin = S.pin; S.pin = "";
+  const pin = S.pin;
+  S.verificando = S.acceso !== "crear";
+  if (S.verificando) { render(); await new Promise((r) => setTimeout(r, 30)); }
+  S.pin = "";
   if (S.acceso === "crear") { S.pin1 = pin; S.acceso = "confirmar"; return render(); }
   if (S.acceso === "confirmar") {
-    if (pin !== S.pin1) { S.acceso = "crear"; S.accErr = "No coinciden. Cree su clave otra vez."; return render(); }
+    if (pin !== S.pin1) { S.verificando = false; S.acceso = "crear"; S.accErr = "No coinciden. Cree su clave otra vez."; return render(); }
     const sal = btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(16))));
     ACC.pin = { sal, hash: await hashPin(pin, sal) }; ACC.fallos = 0; S.pin1 = "";
     guardarLS(AUTH_KEY, ACC);
@@ -646,13 +650,14 @@ async function procesarPin() {
   ACC.fallos = (ACC.fallos || 0) + 1; guardarLS(AUTH_KEY, ACC);
   navigator.vibrate?.(200);
   if (ACC.fallos >= MAX_FALLOS) return salir("5 intentos fallidos. Pida un código nuevo a la posta.");
+  S.verificando = false;
   S.accErr = `Clave incorrecta. Le quedan ${MAX_FALLOS - ACC.fallos} ${plural(MAX_FALLOS - ACC.fallos, "intento", "intentos")}.`;
   render();
 }
 
 let ultimaActividad = Date.now();
 function desbloquear() {
-  S.acceso = null; S.accErr = ""; ultimaActividad = Date.now();
+  S.acceso = null; S.accErr = ""; S.verificando = false; ultimaActividad = Date.now();
   if (!S.meta) arrancarApp(); else { render(); enviarPendientes(); }
 }
 function bloquear() {
@@ -662,7 +667,7 @@ function bloquear() {
 function salir(msg) {
   ACC = null;
   try { localStorage.removeItem(AUTH_KEY); } catch (_) {}
-  Object.assign(S, { acceso: "activar", pin: "", accErr: msg || "", meta: null, lista: null, ruta: null, det: null, v: null });
+  Object.assign(S, { acceso: "activar", verificando: false, pin: "", accErr: msg || "", meta: null, lista: null, ruta: null, det: null, v: null });
   render();
 }
 ["pointerdown", "keydown", "touchstart", "scroll"].forEach((ev) =>

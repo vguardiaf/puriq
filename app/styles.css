@@ -1,12 +1,12 @@
 /* Puriq Lite: app móvil de una columna.
    Color = estado (semáforo) + icono + texto. Tipografía Atkinson Hyperlegible. Una tinta de marca (azul). */
 :root{
-  --bg:#F4F6FA; --surface:#FFFFFF; --soft:#F4F6FA; --ink:#17202E; --muted:#556073; --line:#E1E6EE;
-  --accent:#1F4E8C; --accent-soft:#E8F0FB;
-  --red:#D12F2F; --red-bg:#FDEDED; --red-ink:#8A1C1C;
-  --amb:#B97F00; --amb-bg:#FFF6D8; --amb-ink:#5E3B00;
-  --grn:#2B8E4E; --grn-bg:#E8F6ED; --grn-ink:#155A2D;
-  --done:#2F7F8C; --done-bg:#E5F2F4; --done-ink:#20505A;
+  --bg:#F6F2E8; --surface:#FFFFFF; --soft:#EFE9DC; --ink:#26352F; --muted:#5D6A63; --line:#E2DACB;
+  --accent:#245A45; --accent-soft:#E2ECE5;
+  --red:#B5473A; --red-bg:#F8E6E2; --red-ink:#7E2C22;
+  --amb:#D98267; --amb-bg:#FBEAE3; --amb-ink:#8A3F2A;
+  --grn:#6E9B70; --grn-bg:#EAF1E8; --grn-ink:#34553A;
+  --done:#4D8290; --done-bg:#E3EEF0; --done-ink:#2C5560;
   --fut:#8A92A3; --fut-bg:#F1F3F7; --fut-ink:#4A5364;
   --violet:#5B4BC4; --violet-bg:#EEEBFB; --violet-ink:#352A86;
   --shadow:0 1px 2px rgba(23,32,46,.06),0 6px 20px rgba(23,32,46,.06);
@@ -23,7 +23,7 @@ button{cursor:pointer}
 .skip:focus{left:8px}
 .app{max-width:480px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;background:var(--bg)}
 @media (min-width:700px){
-  body{padding-block:20px;background:#E6EAF1}
+  body{padding-block:20px;background:#E9E2D2}
   .app{min-height:calc(100vh - 40px);border:1px solid var(--line);border-radius:28px;box-shadow:var(--shadow);overflow:clip}
 }
 .pad{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
@@ -65,7 +65,7 @@ main{flex:1;padding-block:16px 28px;display:flex;flex-direction:column;gap:16px;
 .empty{background:var(--surface);border:1px dashed var(--line);border-radius:16px;padding:22px;text-align:center;color:var(--muted)}
 
 /* llamada principal: ruta de hoy */
-.cta{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:14px;width:100%;text-align:left;border:0;border-radius:22px;padding:16px;background:var(--accent);color:#fff;box-shadow:0 8px 24px rgba(31,78,140,.28);min-height:92px}
+.cta{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:14px;width:100%;text-align:left;border:0;border-radius:22px;padding:16px;background:var(--accent);color:#fff;box-shadow:0 8px 24px rgba(36,90,69,.28);min-height:92px}
 .cta .ci{width:52px;height:52px;border-radius:16px;background:rgba(255,255,255,.16);display:grid;place-items:center}
 .cta .ci .ic{width:28px;height:28px}
 .cta b{display:block;font-size:20px;line-height:1.15}
@@ -221,7 +221,7 @@ textarea{min-height:110px;resize:vertical}
 
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(80px + env(safe-area-inset-bottom,0px));width:min(440px,calc(100% - 32px));background:var(--ink);color:#fff;border-radius:16px;padding:10px 12px 10px 14px;display:flex;align-items:center;gap:10px;z-index:900;box-shadow:0 8px 24px rgba(23,32,46,.3);font-weight:700}
 .toast[hidden]{display:none}
-.toast .ic{color:#7FD6B0}
+.toast .ic{color:#9CC59E}
 .toast button{margin-left:auto;background:none;border:0;color:#fff;font-weight:700;text-decoration:underline;min-height:44px;padding:0 8px}
 .wa{background:#ECE5DD;border-radius:16px;padding:10px;display:flex;flex-direction:column;gap:8px}
 .wa-head{display:flex;gap:8px;align-items:center;font-size:14px;font-weight:700;color:#075E54}
@@ -304,3 +304,7 @@ main:has(.login){padding:0;gap:0}
 .lockbtn .ic{width:22px;height:22px}
 .senal{margin-left:auto}
 [hidden]{display:none!important}
+
+.login-logo{width:116px;height:116px;border-radius:32px}
+.login-brand b{font-size:46px;margin-top:12px}
+.login-brand span{font-size:17px}

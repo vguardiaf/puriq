@@ -30,7 +30,7 @@ class Servicio:
 
 
 SERVICIOS = [
-    Servicio("cpn1", "cpn", "1.er control prenatal", 1, 3, False),
+    Servicio("cpn1", "cpn", "Control prenatal 1", 1, 3, False),
     Servicio("orina", "orina", "Examen de orina", 1, 3, True),
     Servicio("hb", "hb", "Examen de hemoglobina", 1, 3, True),
     Servicio("vih", "vih", "Examen de VIH", 1, 3, True),

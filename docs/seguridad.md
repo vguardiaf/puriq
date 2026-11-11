@@ -31,7 +31,7 @@ Fecha: 10 de noviembre de 2026 · Alcance: versión Lite (demo con datos fictici
 
 | Riesgo | Estado | Qué hacer antes de usar datos reales |
 |---|---|---|
-| **No hay inicio de sesión**: quien tenga la URL lee y modifica todo | Aceptable solo con datos ficticios | Usuario por agente + PIN (celular compartido) |
+| Acceso a los datos | **Mitigado** | Activación por la posta (token firmado), clave de 4 números verificada en el celular, bloqueo a los 7 min, 5 intentos, desactivación remota. Límite: en una app web la clave protege del uso casual (hijos), no de alguien que examine el celular a fondo; para eso, app nativa con almacenamiento cifrado del sistema |
 | La transcripción se envía a la API de Claude cuando hay clave | Riesgo | Consentimiento informado que lo diga; acuerdo de tratamiento de datos; o modelo local |
 | Datos en el aviso a la posta | **Mitigado** | Mensaje corto (cabe en un SMS) sin DNI ni dirección exacta; lo envía la promotora desde su WhatsApp o SMS; queda registrado el canal y la hora |
 | Datos de salud = datos sensibles (Ley 29733) | Pendiente | Consentimiento expreso, inscripción del banco de datos ante la ANPD, contrato con la DIRESA/municipio |
@@ -41,4 +41,4 @@ Fecha: 10 de noviembre de 2026 · Alcance: versión Lite (demo con datos fictici
 
 ## Veredicto
 
-**Apta para demostrar con datos ficticios.** **No apta todavía para datos reales**: falta inicio de sesión, consentimiento y acuerdos de datos (Ley 29733), envío real del aviso con confirmación, y validación clínica de los mensajes.
+**Apta para demostrar con datos ficticios.** **No apta todavía para datos reales**: falta consentimiento y acuerdos de datos (Ley 29733), envío real del aviso con confirmación, y validación clínica de los mensajes.
