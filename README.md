@@ -21,8 +21,8 @@ Proyecto final de la Diplomatura en Ciencia de Datos para las Ciencias Sociales 
 
 | | |
 |---|---|
-| **Demo** | `[EDITAR: URL pública de Hugging Face Spaces]` · o en local (ver [Cómo correrlo](#cómo-correrlo)) |
-| **Video de respaldo** | `[EDITAR: link al video de 60-90 s]` |
+| **Demo** | En local, desde la laptop (ver [Cómo correrlo](#cómo-correrlo)) |
+| **Video de respaldo** | [docs/video/puriq_demo.mp4](docs/video/puriq_demo.mp4) (66 s, voz del autor clonada con IA) |
 | **Herramientas del curso** | Mapas con GeoPandas (sesión 06) · Whisper (sesión 13) · LLM con salidas estructuradas (sesión 08) |
 | **Datos** | 100 % ficticios: 26 gestantes inventadas en Quinua (Huamanga, Ayacucho) |
 
@@ -85,7 +85,7 @@ Cómo cubro cada frente con agentes de IA:
 
 ## 6. Demo
 
-**URL:** `[EDITAR]` · **Plan B:** video en `[EDITAR]`.
+**Demo:** en local desde la laptop · **Plan B:** [video de 66 s](docs/video/puriq_demo.mp4).
 
 | Inicio y alertas de servicios | Ruta y mapa | Aviso a la posta: WhatsApp, SMS o llamada |
 |---|---|---|
