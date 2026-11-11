@@ -168,18 +168,32 @@ def mensajes(body: Campos):
     red = ia.redactar(g["nombre"], r["semana"], sel["mensajes"], body.transcripcion, sel["urgente"])
     derivacion = None
     if sel["urgente"]:
-        # Signos de alarma: el agente no atiende, deriva. Se envía al EESS por WhatsApp de forma automática.
-        # Versión Lite: el envío se simula y se ofrece el enlace wa.me; la versión completa usa la API
-        # de WhatsApp Business para enviarlo sin intervención.
+        # Signos de alarma: la promotora no atiende, avisa. La app prepara un mensaje corto y ella lo manda
+        # desde SU celular: WhatsApp (con datos), SMS (sin datos) o llamada (su app de llamadas).
         hora = datetime.now().strftime("%H:%M")
         eess = STORE.inicio
-        texto = ficha3.texto_derivacion(r, sel["signos_alarma"], AGENTE, CELULAR_AGENTE, eess["nombre"], hora)
-        derivacion = STORE.registrar_derivacion(body.gestante_id, {
-            "para": eess["nombre"], "contacto": eess.get("contacto", ""), "numero": eess.get("whatsapp", ""),
-            "signos": sel["signos_alarma"], "texto": texto,
-            "enlace": f"https://wa.me/{eess.get('whatsapp', '')}?text={quote(texto)}", "simulada": True,
-        })
+        num = eess.get("whatsapp", "")
+        texto = ficha3.texto_derivacion(r, sel["signos_alarma"], AGENTE, hora)
+        derivacion = {
+            "para": eess["nombre"], "numero": num, "texto": texto, "signos": sel["signos_alarma"],
+            "whatsapp": f"https://wa.me/{num}?text={quote(texto)}",
+            "sms": f"sms:+{num}?body={quote(texto)}",
+            "tel": f"tel:+{num}",
+            "avisos": STORE.avisos_de_hoy(body.gestante_id),
+        }
     return {**sel, **red, "derivacion": derivacion, "trimestre": r["trimestre"], "semana": r["semana"]}
+
+
+class Aviso(BaseModel):
+    gestante_id: str
+    canal: str = Field(pattern="^(whatsapp|sms|llamada)$")
+
+
+@app.post("/api/visita/aviso")
+def aviso(body: Aviso):
+    """La promotora tocó WhatsApp, SMS o Llamar: se registra para el seguimiento de la derivación."""
+    _gestante(body.gestante_id)
+    return STORE.registrar_aviso(body.gestante_id, body.canal)
 
 
 class Guardar(BaseModel):

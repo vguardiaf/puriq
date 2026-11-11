@@ -38,6 +38,7 @@ const BUCKET = { amar: ["Con alertas", IC.alerta], verde: ["Le toca pronto", IC.
 const ICON = { rojo: IC.perdido, amar: IC.alerta, verde: IC.recordatorio, rec: IC.recibido, fut: IC.futuro };
 const COLORES = [["amar", "Alerta", "Venció, pero aún se puede hacer."], ["verde", "Le toca pronto", "Está en su fecha."],
   ["rojo", "Perdido", "Ya no se puede hacer."], ["rec", "Recibido", "Ya lo recibió."], ["fut", "Más adelante", "Todavía no le toca."]];
+const CANAL = { whatsapp: "WhatsApp", sms: "SMS", llamada: "llamada" };
 const pillNivel = (n) => `<span class="pill st-${n}">${ic(NIVEL[n].i)}${NIVEL[n].t}</span>`;
 
 
@@ -277,15 +278,13 @@ function vVisita() {
   const msg = (m) => `<article class="msg${m.origen === "situacion" ? " sit" : ""}"><div class="mh"><h3>${esc(m.titulo)}</h3></div><p class="say">${esc(m.decir)}</p></article>`;
   return `${datos}
     ${R.derivacion ? `<section class="card deriv" role="alert" aria-labelledby="h-d">
-      <div class="banner st-rojo">${ic("hosp")}<div><b id="h-d">Avisamos a la posta por WhatsApp</b>
-        Enviado a ${esc(R.derivacion.para)} · ${esc(R.derivacion.enviada_en)}. Dígale a la gestante que vaya hoy.</div></div>
-<p class="muted">Llame también a la posta para avisar que ella va.</p>
-      <a class="big red" href="tel:${esc(S.meta?.telefono_posta || "")}">${ic("hosp")}Llamar a la posta</a>
-      <details class="fold"><summary><h2>Ver mensaje enviado</h2></summary>
-      <div class="wa" aria-label="Mensaje enviado"><div class="wa-head">${ic("msg")}${esc(R.derivacion.para)} · ${esc(R.derivacion.contacto)}</div>
-        <p class="wa-bubble">${esc(R.derivacion.texto).replace(/\*([^*]+)\*/g, "<b>$1</b>").replace(/\n/g, "<br>")}<span class="wa-time">${esc(R.derivacion.enviada_en)} ✓✓</span></p></div>
-      <a class="ghost" href="${esc(R.derivacion.enlace)}" target="_blank" rel="noopener">Abrir en WhatsApp</a></details>
-      <p class="muted">Demo: envío simulado.</p>
+      <div class="banner st-rojo">${ic(IC.derivacion)}<div><b id="h-d">Avise ahora a la posta</b>Tiene signos de alarma. Dígale a la gestante que vaya hoy.</div></div>
+      ${(R.derivacion.avisos || []).length ? `<p class="ok-aviso">${ic(IC.recibido)}Avisó por ${R.derivacion.avisos.map((a) => `${CANAL[a.canal]} (${esc(a.hora)})`).join(", ")}</p>` : ""}
+      ${v.error ? `<p class="banner st-rojo" role="alert">${ic(IC.alerta)}<span>${esc(v.error)}</span></p>` : ""}
+      <a class="big wa-btn" href="${esc(R.derivacion.whatsapp)}" data-aviso="whatsapp">${ic("msg")}Enviar por WhatsApp</a>
+      <a class="big ghost-b" href="${esc(R.derivacion.sms)}" data-aviso="sms">${ic("msg")}Enviar SMS (sin internet)</a>
+      <a class="big red" href="${esc(R.derivacion.tel)}" data-aviso="llamada">${ic(IC.derivacion)}Llamar a la posta</a>
+      <details class="fold"><summary><h2>Ver el mensaje</h2></summary><p class="wa-bubble">${esc(R.derivacion.texto)}</p></details>
     </section>` : ""}
     <section class="card" aria-labelledby="h-m"><div class="sec-head"><h2 id="h-m">Qué decirle</h2>${R.fuente === "ia" ? `<span class="pill st-ia">${ic("mic")}Redactado con IA</span>` : ""}</div>
       ${sit.length ? `<h3>Por lo que encontró</h3>${sit.map(msg).join("")}` : ""}
@@ -307,13 +306,13 @@ function vAyuda() {
   const signos = Object.values(cat.signos || {}).map((s) => `<li>${esc(s)}</li>`).join("");
   return `
   ${box("users", "Tu rol", `<p>Tú <b>no das servicios</b>.</p><p>Tú <b>visitas, recuerdas y avisas a la posta</b>.</p>
-    <ul><li>2 visitas al mes, cada 13 a 15 días.</li><li>20 minutos o más por visita.</li><li>Signo de alarma: la app avisa a la posta y tú llamas para informar.</li></ul>`)}
+    <ul><li>2 visitas al mes, cada 13 a 15 días.</li><li>20 minutos o más por visita.</li><li>Signo de alarma: avisa a la posta por WhatsApp, SMS o llamada.</li></ul>`)}
   ${box("doc", "Servicios de cada gestante", `<p>Los recibe en el establecimiento de salud.</p><ul class="pkg">${paquete}</ul>
     <p class="muted">El plan de parto se revisa desde el mes 7.</p>`)}
   ${box(IC.alerta, "Colores", colores)}
   ${box("route", "Cómo se arma la ruta", `<ol><li>Primero: alertas y servicios por vencer.</li><li>Luego: visitas vencidas.</li>
     <li>Junta las casas cercanas para caminar menos.</li><li>Entra en tu tiempo del día.</li></ol>`)}
-  ${box(IC.derivacion, "Signos de alarma", `<ul>${signos}</ul><p>Si hay uno, la app <b>envía un WhatsApp</b> a la posta más cercana: <b>${esc(S.meta?.eess || "")}</b>.</p>`)}
+  ${box(IC.derivacion, "Signos de alarma", `<ul>${signos}</ul><p>Si hay uno, la app prepara un mensaje corto. Usted lo envía por <b>WhatsApp</b> o <b>SMS</b> (sin internet) y <b>llama</b> a la posta: <b>${esc(S.meta?.eess || "")}</b>.</p>`)}
   ${box("mic", "Grabar la Ficha 3", `<p>Pida permiso y grabe la conversación. La app llena:</p>
     <ul><li>Suplementos</li><li>Por qué no los toma</li><li>Signos de alarma</li><li>Hábitos</li></ul><p>Y le da los mensajes para la gestante. Revise antes de guardar.</p>`)}
   ${box("info", "Fuente normativa", `<ul>
@@ -491,6 +490,12 @@ async function generarMensajes() {
 
 async function guardarVisita() {
   const v = S.v, R = v.res;
+  // Seguridad: con signos de alarma no se guarda sin haber avisado a la posta.
+  if (R.derivacion && !(R.derivacion.avisos || []).length) {
+    v.error = "Primero avise a la posta: WhatsApp, SMS o llamada.";
+    render(); $(".deriv")?.scrollIntoView({ block: "start" });
+    return;
+  }
   try {
     S.det = await api("/api/visita/guardar", { method: "POST", body: JSON.stringify({
       gestante_id: v.pid, campos: soloValores(v.campos), urgente: R.urgente, referencias: R.referencias,
@@ -513,6 +518,19 @@ function toast(msg, undo) {
 }
 
 document.addEventListener("click", async (e) => {
+  // Aviso a la posta: el enlace abre WhatsApp, SMS o la app de llamadas del celular; aquí solo se registra.
+  const av = e.target.closest("[data-aviso]");
+  if (av && S.v?.res?.derivacion) {
+    const canal = av.dataset.aviso, d = S.v.res.derivacion;
+    const cuerpo = JSON.stringify({ gestante_id: S.v.pid, canal });
+    if (!(navigator.sendBeacon && navigator.sendBeacon("/api/visita/aviso", new Blob([cuerpo], { type: "application/json" }))))
+      fetch("/api/visita/aviso", { method: "POST", headers: { "Content-Type": "application/json" }, body: cuerpo, keepalive: true }).catch(() => {});
+    const h = new Date();
+    d.avisos = [...(d.avisos || []), { canal, hora: `${String(h.getHours()).padStart(2, "0")}:${String(h.getMinutes()).padStart(2, "0")}` }];
+    S.v.error = "";
+    setTimeout(render, 400);
+    return;
+  }
   const b = e.target.closest("[data-act]"); if (!b) return;
   const a = b.dataset.act, v = S.v;
   if (a === "go") go(b.dataset.view);

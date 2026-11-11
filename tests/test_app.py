@@ -99,11 +99,14 @@ def test_flujo_visita_por_api():
     valores["motivos"] = campos["motivos"]
     m = client.post("/api/visita/mensajes", json={"gestante_id": gid, "campos": valores, "transcripcion": texto}).json()
     assert m["urgente"] and m["mensajes"]
-    # Signos de alarma -> derivación automática al EESS por WhatsApp
+    # Signos de alarma -> la promotora avisa desde su celular: WhatsApp, SMS o llamada
     der = m["derivacion"]
-    assert der and der["enlace"].startswith("https://wa.me/") and "Hinchazón" in der["texto"]
-    otra = client.post("/api/visita/mensajes", json={"gestante_id": gid, "campos": valores}).json()["derivacion"]
-    assert otra["enviada_en"] == der["enviada_en"] and len(STORE.derivaciones) == 1  # no se duplica
+    assert der["whatsapp"].startswith("https://wa.me/") and der["sms"].startswith("sms:+") and der["tel"].startswith("tel:+")
+    assert "DNI" not in der["texto"] and len(der["texto"]) <= 320 and "hinchazón" in der["texto"].lower()
+    assert der["avisos"] == []
+    av = client.post("/api/visita/aviso", json={"gestante_id": gid, "canal": "sms"}).json()
+    assert [a["canal"] for a in av["avisos"]] == ["sms"]
+    assert client.post("/api/visita/aviso", json={"gestante_id": gid, "canal": "paloma"}).status_code == 422
     d = client.post("/api/visita/guardar", json={"gestante_id": gid, "campos": valores, "urgente": True,
                                                  "referencias": m["referencias"], "mensajes": m["mensajes"]}).json()
     assert d["dias_desde_visita"] == 0 and d["derivada_ultima_visita"] and d["prioridad"]["nivel"] in ("alerta", "seguimiento")

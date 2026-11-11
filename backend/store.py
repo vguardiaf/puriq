@@ -142,18 +142,16 @@ class Store:
                 g["entregados"].pop("plan", None)
         return self.detalle(gid)
 
-    def registrar_derivacion(self, gid: str, derivacion: dict) -> dict:
-        """Guarda la derivación al EESS. Una por gestante y día: si se repite, devuelve la ya enviada."""
-        with _lock:
-            hoy = self.hoy.isoformat()
-            previa = next((d for d in self.derivaciones if d["gestante_id"] == gid and d["fecha"] == hoy), None)
-            if previa:
-                previa.update({k: v for k, v in derivacion.items() if k in ("signos", "texto")})
-                return previa
-            d = {**derivacion, "gestante_id": gid, "fecha": hoy,
-                 "enviada_en": datetime.now().strftime("%H:%M"), "estado": "enviada"}
-            self.derivaciones.append(d)
-            return d
+    def avisos_de_hoy(self, gid: str) -> list[dict]:
+        hoy = self.hoy.isoformat()
+        return [{"canal": d["canal"], "hora": d["hora"]} for d in self.derivaciones
+                if d["gestante_id"] == gid and d["fecha"] == hoy]
 
+    def registrar_aviso(self, gid: str, canal: str) -> dict:
+        """Registra que la promotora avisó a la posta (whatsapp | sms | llamada)."""
+        with _lock:
+            self.derivaciones.append({"gestante_id": gid, "fecha": self.hoy.isoformat(),
+                                      "hora": datetime.now().strftime("%H:%M"), "canal": canal})
+        return {"avisos": self.avisos_de_hoy(gid)}
 
 STORE = Store()

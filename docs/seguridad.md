@@ -22,7 +22,7 @@ Fecha: 10 de noviembre de 2026 · Alcance: versión Lite (demo con datos fictici
 | La app no detecta un signo de alarma (falso negativo) | **Mitigado** | Palabras clave ampliadas + **no se puede avanzar si un signo quedó en "No se habló"**: la agente debe preguntar y marcar los 6 |
 | La IA inventa respuestas | Mitigado | Lo no dicho queda "No se habló"; se muestra la frase que respalda cada respuesta; la agente revisa |
 | La IA da un consejo médico equivocado | Mitigado | Los mensajes los eligen reglas basadas en la norma; la IA solo los reescribe y tiene prohibido agregar indicaciones |
-| Creer que la posta recibió el aviso cuando el envío es simulado | **Riesgo en demo** | Dice "Demo: envío simulado" y se pide **llamar a la posta para informar** |
+| Que la promotora no avise a la posta | **Mitigado** | Botones WhatsApp / SMS (sin datos) / Llamar con las apps del celular; **no se puede guardar la visita sin avisar** |
 | La posta no responde (zona rural) | Pendiente | Versión completa: confirmación "visto / atendida" y reintento |
 | Conversación en quechua | Parcial | Algunas frases en quechua para signos; Whisper está configurado en castellano |
 | Mensajes de orientación sin validar | Pendiente | Validar los textos con obstetra / PROMSA antes del piloto |
@@ -33,7 +33,7 @@ Fecha: 10 de noviembre de 2026 · Alcance: versión Lite (demo con datos fictici
 |---|---|---|
 | **No hay inicio de sesión**: quien tenga la URL lee y modifica todo | Aceptable solo con datos ficticios | Usuario por agente + PIN (celular compartido) |
 | La transcripción se envía a la API de Claude cuando hay clave | Riesgo | Consentimiento informado que lo diga; acuerdo de tratamiento de datos; o modelo local |
-| El aviso por WhatsApp lleva nombre, DNI, dirección y signos | Riesgo | Mandar solo lo necesario; WhatsApp Business API; registro de envíos |
+| Datos en el aviso a la posta | **Mitigado** | Mensaje corto (cabe en un SMS) sin DNI ni dirección exacta; lo envía la promotora desde su WhatsApp o SMS; queda registrado el canal y la hora |
 | Datos de salud = datos sensibles (Ley 29733) | Pendiente | Consentimiento expreso, inscripción del banco de datos ante la ANPD, contrato con la DIRESA/municipio |
 | El audio se procesa en el servidor | OK | No se guarda; solo se transcribe |
 | Estado en memoria compartido entre todos los que abren el demo | Aceptable en demo | Base de datos con control de acceso por establecimiento |

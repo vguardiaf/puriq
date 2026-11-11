@@ -150,21 +150,12 @@ def seleccionar_mensajes(campos: dict, trimestre: int, pendientes_control: bool)
             "referencias": referencias, "para_la_posta": para_la_posta, "mensajes": mensajes}
 
 
-def texto_derivacion(r: dict, signos: list[str], agente: str, celular_agente: str, eess: str, hora: str) -> str:
-    """Mensaje de WhatsApp que recibe el establecimiento cuando la visita detecta signos de alarma."""
-    return "\n".join([
-        "*Derivación de gestante con signos de alarma* · Puriq",
-        f"Para: {eess}",
-        "",
-        f"Gestante: {r['nombre']} · DNI {r['dni']} · {r['edad']} años",
-        f"Semana {r['semana']} de gestación · parto probable {r['fpp'][8:10]}/{r['fpp'][5:7]}/{r['fpp'][:4]}",
-        f"Dirección: {r['direccion']} · Cel. {r['celular']}",
-        "Signos de alarma detectados en la visita domiciliaria:",
-        *[f"• {s}" for s in signos],
-        "",
-        f"Detectado por: {agente} (agente comunitaria) · Cel. {celular_agente} · {hora}",
-        "Se indicó a la gestante acudir hoy al establecimiento. Por favor, confirmar la atención.",
-    ])
+def texto_derivacion(r: dict, signos: list[str], agente: str, hora: str) -> str:
+    """Aviso corto para la posta: cabe en un SMS y lleva solo lo necesario para ubicar a la gestante
+    (sin DNI ni dirección exacta: la promotora completa por llamada si hace falta)."""
+    return (f"PURIQ - Signos de alarma. Gestante {r['nombre']}, {r['mes']} meses de embarazo, {r['sector']}. "
+            f"Signos: {'; '.join(s.lower() for s in signos)}. Le dije que vaya hoy a la posta. "
+            f"Promotora {agente}, {hora}.")
 
 
 # Plan de parto (III trimestre): lo que debe tener la ficha de plan de parto de la gestante.

@@ -270,3 +270,7 @@ main{gap:14px}
 .big.red{background:var(--red)}
 .big.ghost-b{background:var(--surface);color:var(--accent);border:2px solid var(--accent)}
 a.ghost{display:flex;align-items:center;justify-content:center}
+
+.big.wa-btn{background:#128C7E}
+.ok-aviso{display:flex;gap:8px;align-items:center;margin:0;font-weight:700;color:var(--grn-ink);background:var(--grn-bg);border-radius:12px;padding:8px 12px}
+.deriv .wa-bubble{align-self:stretch;max-width:100%}
