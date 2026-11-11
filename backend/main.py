@@ -5,12 +5,14 @@
 from __future__ import annotations
 
 import os
+import time
+from collections import defaultdict, deque
 from contextlib import asynccontextmanager
 from datetime import datetime
 from pathlib import Path
 from urllib.parse import quote
 
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import Depends, FastAPI, File, HTTPException, Request, UploadFile
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
@@ -25,6 +27,19 @@ RAIZ = Path(__file__).resolve().parents[1]
 WEB = RAIZ / "app" / "dist" if (RAIZ / "app" / "dist" / "index.html").exists() else RAIZ / "app"
 MAX_AUDIO = 15 * 1024 * 1024
 AGENTE, CELULAR_AGENTE = "Rosa Huamán", "51911111111"  # agente ficticia del demo
+LIMITE_POR_MIN = int(os.getenv("LIMITE_POR_MIN", "20"))
+_llamadas: dict[str, deque] = defaultdict(deque)
+
+
+def _limite(request: Request) -> None:
+    """Límite simple por IP para Whisper y la IA: evita abuso de CPU y gasto de API en el demo público."""
+    ip = request.client.host if request.client else "?"
+    q, ahora = _llamadas[ip], time.time()
+    while q and ahora - q[0] > 60:
+        q.popleft()
+    if len(q) >= LIMITE_POR_MIN:
+        raise HTTPException(429, "Demasiadas solicitudes. Espere un minuto.")
+    q.append(ahora)
 
 @asynccontextmanager
 async def _vida(_app: FastAPI):
@@ -111,7 +126,7 @@ def plan_parto(gid: str, body: PlanParto):
 
 
 # ─────────────────────────────── visita domiciliaria (Ficha 3)
-@app.post("/api/visita/transcribir")
+@app.post("/api/visita/transcribir", dependencies=[Depends(_limite)])
 async def transcribir(audio: UploadFile = File(...)):
     datos = await audio.read()
     if not datos:
@@ -129,7 +144,7 @@ class Texto(BaseModel):
     texto: str = Field(min_length=10, max_length=20000)
 
 
-@app.post("/api/visita/extraer")
+@app.post("/api/visita/extraer", dependencies=[Depends(_limite)])
 def extraer(body: Texto):
     _gestante(body.gestante_id)
     return ia.extraer(body.texto)
@@ -145,7 +160,7 @@ def _pendientes_control(gid: str) -> bool:
     return any(s["tipo"] == "cpn" and s["estado"] in ("rojo", "verde") for s in STORE.servicios(STORE.gestantes[gid]))
 
 
-@app.post("/api/visita/mensajes")
+@app.post("/api/visita/mensajes", dependencies=[Depends(_limite)])
 def mensajes(body: Campos):
     g = _gestante(body.gestante_id)
     r = STORE.resumen(g)

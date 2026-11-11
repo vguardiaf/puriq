@@ -2,6 +2,7 @@ import os
 from datetime import date, timedelta
 
 os.environ["WHISPER_PRELOAD"] = "0"
+os.environ["LIMITE_POR_MIN"] = "1000"
 os.environ.pop("ANTHROPIC_API_KEY", None)  # las pruebas usan el respaldo por reglas
 
 from fastapi.testclient import TestClient
@@ -146,3 +147,38 @@ def test_grupos_de_gestantes_cuadran():
     con_alertas = [x for x in g if x["bucket"] == "amar"]
     assert len(con_alertas) == sum(1 for x in g if x["alertas"])
     assert sum(1 for x in g if x["bucket"] in ("amar", "verde", "ok")) == len(g)
+
+
+# ─────────────────────────────── seguridad clínica: detección de signos de alarma sin IA
+CASOS_SIGNOS = [
+    ("Me duele mucho la cabeza.", "vision_cefalea", "si"), ("A ratos veo borroso.", "vision_cefalea", "si"),
+    ("No tengo dolor de cabeza.", "vision_cefalea", "no"), ("No sé, me duele la cabeza.", "vision_cefalea", "si"),
+    ("Tengo los pies hinchados.", "hinchazon", "si"), ("Se me hincha la cara en las mañanas.", "hinchazon", "si"),
+    ("No estoy hinchada.", "hinchazon", "no"), ("El bebé no se mueve desde ayer.", "bebe_no_se_mueve", "si"),
+    ("Casi no siento que se mueva mi bebé.", "bebe_no_se_mueve", "si"), ("Ayer sangré un poquito.", "sangrado", "si"),
+    ("Estoy manchando.", "sangrado", "si"), ("No he sangrado nada.", "sangrado", "no"),
+    ("Sangrecita nunca he comido.", "sangrado", "nm"), ("Me salió agüita por abajo.", "perdida_liquido", "si"),
+    ("Se me rompió la fuente.", "perdida_liquido", "si"), ("Tengo contracciones.", "dolor_contracciones", "si"),
+    ("Me duele la barriga muy fuerte.", "dolor_contracciones", "si"), ("Umayqa nanawanmi.", "vision_cefalea", "si"),
+    ("Chakiykuna punkisqa.", "hinchazon", "si"),
+]
+
+
+def test_respaldo_detecta_signos_de_alarma():
+    from ai.visita import _respaldo_extraer
+    fallos = [(f, k, e) for f, k, e in CASOS_SIGNOS if _respaldo_extraer(f)["signos"][k]["valor"] != e]
+    assert not fallos, fallos
+
+
+def test_limite_de_solicitudes():
+    import backend.main as m
+    m._llamadas.clear()
+    antes = m.LIMITE_POR_MIN
+    m.LIMITE_POR_MIN = 3
+    try:
+        cods = [client.post("/api/visita/extraer", json={"gestante_id": "G19", "texto": "me duele la cabeza"}).status_code
+                for _ in range(5)]
+        assert cods[:3] == [200, 200, 200] and cods[3] == 429
+    finally:
+        m.LIMITE_POR_MIN = antes
+        m._llamadas.clear()

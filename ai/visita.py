@@ -113,13 +113,17 @@ def _norm(s: str) -> str:
 
 
 CLAVES_SIGNOS = {
-    "vision_cefalea": r"dolor de cabeza|veo borroso|vision borrosa|me duele la cabeza",
-    "bebe_no_se_mueve": r"no se mueve|no lo siento moverse|no se ha movido",
-    "perdida_liquido": r"\bliquido\b|se me salio (el )?agua",
-    "hinchazon": r"hinchad|hinchazon|se me hinchan",
-    "sangrado": r"sangr",
-    "dolor_contracciones": r"contraccion|dolor de barriga fuerte|se me endurece",
+    # Castellano coloquial de la zona y algunas frases en quechua. Ante la duda, mejor detectar de más.
+    "vision_cefalea": r"dolor de cabeza|duele (mucho |bastante )?(la )?cabeza|veo borroso|vision borrosa|veo (lucecitas|estrellitas|nublado|oscuro)|umay\w* nana",
+    "bebe_no_se_mueve": r"no se mueve|no (lo |la )?siento (que se )?m(o|ue)v|casi no se mueve|se mueve poco|no se ha movido|wawa\w* mana kuyu",
+    "perdida_liquido": r"\bliquido\b|aguita|agua por abajo|rompio la fuente|me mojo|se me salio (el )?agua",
+    "hinchazon": r"hinch|punki",
+    "sangrado": r"sangr(?!ecita)|manch|yawar",
+    "dolor_contracciones": r"contraccion|dolor de barriga|duele (mucho |bastante )?(la )?barriga|duele (mucho )?el vientre|se me endurece|wiksa\w* nana",
 }
+# Negación pegada al signo ("no tengo dolor de cabeza", "sangrado no", "líquido tampoco").
+_NEG_ANTES = re.compile(r"\b(no|nunca|ningun\w*|nada de)\s+(\w+\s+){0,2}$")
+_NEG_DESPUES = re.compile(r"^\w*[\s,]*(no|tampoco|nada|nunca)\b")
 CLAVES_MOTIVOS = {
     "tragar": r"tragar", "estrenimiento": r"estren|me cae mal|malestar", "se_acabo": r"se me acab|ya no tengo",
     "no_le_dieron": r"no me dieron", "nauseas": r"nausea|asco|vomit|no me gusta", "sabor": r"sabor|olor",
@@ -145,12 +149,14 @@ def _respaldo_extraer(texto: str) -> dict:
         sup[k] = {"valor": v, "evidencia": ev}
     signos = {}
     for k, pat in CLAVES_SIGNOS.items():
-        f = next((f for f in frases if re.search(pat, f)), None)
-        if f is None:
+        hallado = next(((f, m) for f in frases if (m := re.search(pat, f))), None)
+        if hallado is None:
             signos[k] = {"valor": "nm", "evidencia": ""}
         else:
-            # "no se mueve" es el propio signo; en los demás, un "no"/"tampoco" en la frase lo niega.
-            neg = k != "bebe_no_se_mueve" and re.search(r"\bno\b|\btampoco\b|\bnunca\b|\bnada\b|\bningun", f)
+            f, m = hallado
+            # "no se mueve" es el propio signo; en los demás, solo niega un "no" pegado al signo.
+            neg = k != "bebe_no_se_mueve" and (
+                _NEG_ANTES.search(f[max(0, m.start() - 20):m.start()]) or _NEG_DESPUES.search(f[m.end():m.end() + 14]))
             signos[k] = {"valor": "no" if neg else "si", "evidencia": f[:120]}
     hab = {}
     for k, pat in {"frutas_verduras": r"fruta|verdura", "cepillado": r"cepill|dientes",

@@ -1,0 +1,44 @@
+# Evaluación de seguridad · Puriq Lite
+
+Fecha: 10 de noviembre de 2026 · Alcance: versión Lite (demo con datos ficticios), uso por agente comunitaria en Quinua.
+
+## Pruebas corridas
+
+| Prueba | Resultado |
+|---|---|
+| Flujo completo en navegador (llenar a mano y con audio) | Pasa: sin caja "Revise" al llenar a mano, botón "Grabar visita", aviso a la posta con "Llamar a la posta", sin 106 y sin compromiso |
+| 14 pruebas automáticas (`pytest`) | Pasan |
+| Detección de signos de alarma **sin IA** (19 frases coloquiales y en quechua) | Antes: 5 de 14 signos presentes. **Ahora: todos**, con negaciones bien leídas ("no tengo dolor de cabeza") |
+| Leer archivos fuera de `app/` (path traversal) | Bloqueado (404) |
+| HTML/JS dentro de una transcripción | Se muestra como texto; el frontend escapa todo |
+| Audio vacío, corrupto o de más de 15 MB | Rechazado con mensaje claro (422 / 413) |
+| Abuso de Whisper o de la IA (muchas llamadas seguidas) | **Antes sin límite. Ahora 20 por minuto por IP** (429) |
+| Claves o secretos en el historial de git | No hay |
+
+## Seguridad clínica (riesgo para la gestante)
+
+| Riesgo | Estado | Control |
+|---|---|---|
+| La app no detecta un signo de alarma (falso negativo) | **Mitigado** | Palabras clave ampliadas + **no se puede avanzar si un signo quedó en "No se habló"**: la agente debe preguntar y marcar los 6 |
+| La IA inventa respuestas | Mitigado | Lo no dicho queda "No se habló"; se muestra la frase que respalda cada respuesta; la agente revisa |
+| La IA da un consejo médico equivocado | Mitigado | Los mensajes los eligen reglas basadas en la norma; la IA solo los reescribe y tiene prohibido agregar indicaciones |
+| Creer que la posta recibió el aviso cuando el envío es simulado | **Riesgo en demo** | Dice "Demo: envío simulado" y se pide **llamar a la posta para informar** |
+| La posta no responde (zona rural) | Pendiente | Versión completa: confirmación "visto / atendida" y reintento |
+| Conversación en quechua | Parcial | Algunas frases en quechua para signos; Whisper está configurado en castellano |
+| Mensajes de orientación sin validar | Pendiente | Validar los textos con obstetra / PROMSA antes del piloto |
+
+## Seguridad de datos (privacidad)
+
+| Riesgo | Estado | Qué hacer antes de usar datos reales |
+|---|---|---|
+| **No hay inicio de sesión**: quien tenga la URL lee y modifica todo | Aceptable solo con datos ficticios | Usuario por agente + PIN (celular compartido) |
+| La transcripción se envía a la API de Claude cuando hay clave | Riesgo | Consentimiento informado que lo diga; acuerdo de tratamiento de datos; o modelo local |
+| El aviso por WhatsApp lleva nombre, DNI, dirección y signos | Riesgo | Mandar solo lo necesario; WhatsApp Business API; registro de envíos |
+| Datos de salud = datos sensibles (Ley 29733) | Pendiente | Consentimiento expreso, inscripción del banco de datos ante la ANPD, contrato con la DIRESA/municipio |
+| El audio se procesa en el servidor | OK | No se guarda; solo se transcribe |
+| Estado en memoria compartido entre todos los que abren el demo | Aceptable en demo | Base de datos con control de acceso por establecimiento |
+| `/api/docs` expuesto | Aceptable en demo | Ocultarlo en producción |
+
+## Veredicto
+
+**Apta para demostrar con datos ficticios.** **No apta todavía para datos reales**: falta inicio de sesión, consentimiento y acuerdos de datos (Ley 29733), envío real del aviso con confirmación, y validación clínica de los mensajes.

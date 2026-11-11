@@ -49,7 +49,7 @@ const S = {
 };
 
 function nuevaVisita(pid) {
-  return { pid, fase: "inicio", texto: "", campos: null, fuente: null, resumen: "", res: null, compromiso: "", seg: 0, error: "" };
+  return { pid, fase: "inicio", texto: "", campos: null, fuente: null, resumen: "", res: null, seg: 0, error: "" };
 }
 
 // ─────────────────────────────── vistas
@@ -192,7 +192,7 @@ function vFicha() {
     </dl>
     ${g.prioridad.razones.length ? `<div class="cc">${g.prioridad.razones.slice(0, 3).map((r) => `<span class="pill st-${g.prioridad.nivel}">${esc(r)}</span>`).join("")}</div>` : ""}
   </section>
-  <button class="big" data-act="visita" data-id="${g.id}">${ic("mic")}Visita · Ficha 3</button>
+  <button class="big" data-act="visita" data-id="${g.id}">${ic("mic")}Grabar visita</button>
   ${plan}
   ${grupos}
   <details class="card fold"><summary><span class="dot st-fut">${ic(IC.visita)}</span><h2>Visitas</h2><span class="muted">${g.historial.length}</span></summary>${hist}</details>`;
@@ -249,19 +249,19 @@ function vVisita() {
   const fuente = v.fuente === "ia" ? `<span class="pill st-ia">${ic("mic")}Llenado con IA · revise</span>`
     : v.fuente === "reglas" ? `<span class="pill st-amar">${ic("info")}Llenado automático · revise</span>` : "";
   const ficha = `
-    <section class="card">
-      <div class="sec-head"><h2>Revise</h2></div>
+    ${v.texto ? `<section class="card">
       <div class="cc">${fuente}</div>
       ${v.texto ? `<details><summary class="link">${ic("doc")}Ver lo que se grabó</summary>
         <label class="sr" for="tx">Transcripción</label><textarea id="tx">${esc(v.texto)}</textarea>
         <button class="sec" data-act="rellenar">${ic("mic")}Llenar otra vez</button></details>` : ""}
-    </section>
+    </section>` : ""}
     <section class="card" aria-labelledby="h-c9"><h2 id="h-c9">Suplementos</h2>
       ${Object.entries(cat.suplementos).map(([k, l], i) => triHTML("suplementos", k, l, c.suplementos[k].valor, c.suplementos[k].evidencia, false).replace('class="q"', i ? 'class="q"' : 'class="q first"')).join("")}
     </section>
     ${algunoNo ? `<section class="card" aria-labelledby="h-c10"><h2 id="h-c10">¿Por qué no lo toma?</h2>
       <div class="checks">${Object.entries(cat.motivos).map(([k, l]) => `<label><input type="checkbox" data-motivo="${k}" ${c.motivos.includes(k) ? "checked" : ""}>${esc(l)}</label>`).join("")}</div></section>` : ""}
-    <section class="card" aria-labelledby="h-c11"><h2 id="h-c11">Signos de alarma</h2><p class="muted">Si hay uno, avisamos a la posta.</p>
+    <section class="card" aria-labelledby="h-c11"><h2 id="h-c11">Signos de alarma</h2><p class="muted">Pregunte por todos. Si hay uno, avisamos a la posta.</p>
+      ${v.error ? `<p class="banner st-rojo" role="alert">${ic(IC.alerta)}<span>${esc(v.error)}</span></p>` : ""}
       ${Object.entries(cat.signos).map(([k, l]) => triHTML("signos", k, l, c.signos[k].valor, c.signos[k].evidencia, true)).join("")}
     </section>
     <section class="card" aria-labelledby="h-c12"><h2 id="h-c12">Hábitos</h2>
@@ -278,23 +278,20 @@ function vVisita() {
   return `${datos}
     ${R.derivacion ? `<section class="card deriv" role="alert" aria-labelledby="h-d">
       <div class="banner st-rojo">${ic("hosp")}<div><b id="h-d">Avisamos a la posta por WhatsApp</b>
-        Enviado a ${esc(R.derivacion.para)} · ${esc(R.derivacion.enviada_en)}. Dígale que vaya hoy.</div></div>
-<div class="si-no"><a class="big red" href="tel:${esc(S.meta?.telefono_posta || "")}">${ic("hosp")}Llamar a la posta</a>
-        <a class="big ghost-b" href="tel:106">${ic("alert")}Emergencia 106</a></div>
+        Enviado a ${esc(R.derivacion.para)} · ${esc(R.derivacion.enviada_en)}. Dígale a la gestante que vaya hoy.</div></div>
+<p class="muted">Llame también a la posta para avisar que ella va.</p>
+      <a class="big red" href="tel:${esc(S.meta?.telefono_posta || "")}">${ic("hosp")}Llamar a la posta</a>
       <details class="fold"><summary><h2>Ver mensaje enviado</h2></summary>
       <div class="wa" aria-label="Mensaje enviado"><div class="wa-head">${ic("msg")}${esc(R.derivacion.para)} · ${esc(R.derivacion.contacto)}</div>
         <p class="wa-bubble">${esc(R.derivacion.texto).replace(/\*([^*]+)\*/g, "<b>$1</b>").replace(/\n/g, "<br>")}<span class="wa-time">${esc(R.derivacion.enviada_en)} ✓✓</span></p></div>
       <a class="ghost" href="${esc(R.derivacion.enlace)}" target="_blank" rel="noopener">Abrir en WhatsApp</a></details>
       <p class="muted">Demo: envío simulado.</p>
     </section>` : ""}
-    ${(R.referencias || []).filter((x) => !x.startsWith("Presenta signos")).length ? `<div class="banner st-amar">${ic("hosp")}<div><b>Debe ir a la posta por:</b><ul>${R.referencias.filter((x) => !x.startsWith("Presenta signos")).map((r) => `<li>${esc(r)}</li>`).join("")}</ul></div></div>` : ""}
     <section class="card" aria-labelledby="h-m"><div class="sec-head"><h2 id="h-m">Qué decirle</h2>${R.fuente === "ia" ? `<span class="pill st-ia">${ic("mic")}Redactado con IA</span>` : ""}</div>
       ${sit.length ? `<h3>Por lo que encontró</h3>${sit.map(msg).join("")}` : ""}
       ${tri.length ? `<h3>Por sus meses de embarazo</h3>${tri.map(msg).join("")}` : ""}
     </section>
-    <section class="card"><h2>Compromiso</h2><p class="muted">${esc(R.cierre)}</p>
-      <div class="field"><label for="comp">SE COMPROMETE A</label><textarea id="comp" placeholder="Tomar el hierro todos los días">${esc(v.compromiso)}</textarea></div>
-    </section>
+    ${(R.para_la_posta || []).length ? `<div class="banner st-amar">${ic(IC.recordatorio)}<div><b>Recuérdele ir a la posta para:</b><ul>${R.para_la_posta.map((r) => `<li>${esc(r)}</li>`).join("")}</ul></div></div>` : ""}
     <button class="big teal" data-act="guardar">${ic("check")}Guardar visita</button>
     <button class="ghost" data-act="volver-ficha">Volver a la Ficha 3</button>`;
 }
@@ -310,7 +307,7 @@ function vAyuda() {
   const signos = Object.values(cat.signos || {}).map((s) => `<li>${esc(s)}</li>`).join("");
   return `
   ${box("users", "Tu rol", `<p>Tú <b>no das servicios</b>.</p><p>Tú <b>visitas, recuerdas y avisas a la posta</b>.</p>
-    <ul><li>2 visitas al mes, cada 13 a 15 días.</li><li>20 minutos o más por visita.</li><li>Signo de alarma: avisa a la posta.</li><li>Si es grave: llama al 106.</li></ul>`)}
+    <ul><li>2 visitas al mes, cada 13 a 15 días.</li><li>20 minutos o más por visita.</li><li>Signo de alarma: la app avisa a la posta y tú llamas para informar.</li></ul>`)}
   ${box("doc", "Servicios de cada gestante", `<p>Los recibe en el establecimiento de salud.</p><ul class="pkg">${paquete}</ul>
     <p class="muted">El plan de parto se revisa desde el mes 7.</p>`)}
   ${box(IC.alerta, "Colores", colores)}
@@ -494,11 +491,10 @@ async function generarMensajes() {
 
 async function guardarVisita() {
   const v = S.v, R = v.res;
-  v.compromiso = $("#comp")?.value || "";
   try {
     S.det = await api("/api/visita/guardar", { method: "POST", body: JSON.stringify({
       gestante_id: v.pid, campos: soloValores(v.campos), urgente: R.urgente, referencias: R.referencias,
-      mensajes: R.mensajes, compromiso: v.compromiso, consentimiento: v.consentimiento ?? null,
+      mensajes: R.mensajes, consentimiento: v.consentimiento ?? null,
       resumen: (v.fuente === "ia" && v.resumen) || R.referencias.join(" · ") || "Visita realizada sin hallazgos.",
       duracion_s: v.duracion ? Math.round(v.duracion) : v.seg || null }) });
     S.v = null;
@@ -553,8 +549,13 @@ document.addEventListener("click", async (e) => {
   }
   else if (a === "manual") { v.consentimiento = v.consentimiento ?? false; v.campos = camposVacios(); v.fuente = null; v.fase = "ficha"; render(); }
   else if (a === "rellenar") { v.texto = $("#tx").value; llenar(); }
-  else if (a === "campo") { v.campos[b.dataset.g][b.dataset.k].valor = b.dataset.v; render(); }
-  else if (a === "mensajes") generarMensajes();
+  else if (a === "campo") { v.campos[b.dataset.g][b.dataset.k].valor = b.dataset.v; if (b.dataset.g === "signos") v.error = ""; render(); }
+  else if (a === "mensajes") {
+    // Seguridad: no se avanza si algún signo de alarma quedó sin preguntar.
+    const faltan = Object.entries(v.campos.signos).filter(([, x]) => x.valor === "nm").map(([k]) => S.cat.signos[k].toLowerCase());
+    if (faltan.length) { v.error = `Falta preguntar: ${faltan.join("; ")}.`; render(); $("#h-c11")?.scrollIntoView({ block: "start" }); return; }
+    v.error = ""; generarMensajes();
+  }
   else if (a === "volver-ficha") { v.fase = "ficha"; render(); }
   else if (a === "guardar") guardarVisita();
   else if (a === "reiniciar") { await api("/api/demo/reiniciar", { method: "POST" }); S.v = null; await cargarLista(); toast("Datos del demo reiniciados"); go("inicio"); }
@@ -568,7 +569,6 @@ document.addEventListener("change", (e) => {
 });
 document.addEventListener("input", (e) => {
   if (e.target.id === "q") { S.q = e.target.value; const pos = e.target.selectionStart; render(); const q = $("#q"); q.focus(); q.setSelectionRange(pos, pos); }
-  if (e.target.id === "comp" && S.v) S.v.compromiso = e.target.value;
 });
 window.addEventListener("hashchange", route);
 

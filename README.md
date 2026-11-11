@@ -102,7 +102,7 @@ flowchart LR
 ```
 
 **Modelos y APIs, y por qué:**
-- **faster-whisper `small` (int8, CPU) en el servidor:** el audio de una visita de salud es sensible; se transcribe ahí mismo y no se guarda. `small` equilibra precisión y velocidad (un audio de 1 minuto tarda unos 15 s en una laptop).
+- **faster-whisper `small` (int8, CPU) en el servidor:** el audio de una visita de salud es sensible; se transcribe ahí mismo y no se guarda. Ojo: la **transcripción** sí se envía a la API de Claude cuando hay clave; con datos reales eso exige consentimiento y acuerdo de datos (ver [seguridad](docs/seguridad.md)). `small` equilibra precisión y velocidad (un audio de 1 minuto tarda unos 15 s en una laptop).
 - **Claude (por defecto `claude-opus-5-5`, configurable con `CLAUDE_MODEL`)** con salida estructurada (JSON Schema), en dos llamadas: (1) llenar la Ficha 3 con "sí / no / no se habló" y la frase que lo respalda; (2) redactar los mensajes ya elegidos por reglas. Se activa el *fallback* del servidor si el modelo rechaza la consulta. Sin clave de API, la app usa un **respaldo por palabras clave**, así el demo nunca se cuelga.
 - **GeoPandas:** proyecta las casas a UTM 18S para medir distancias en metros y arma el GeoJSON del mapa.
 - **Leaflet + OpenStreetMap:** mapa liviano y gratuito.
@@ -167,6 +167,10 @@ pytest -q                                         # 10 pruebas
 - **Primeros usuarios:** 10 agentes de un distrito piloto (Quinua u otro con programa social activo) → 100 con una municipalidad y una empresa → 1 000 con una red de municipalidades o un gobierno regional.
 - **Plan:** 3 meses, piloto real con consentimiento; 6 meses, modo sin conexión y quechua; 12 meses, niñas y niños (CRED) y panel del establecimiento.
 - **Riesgos:** (1) privacidad de datos de salud, que se mitiga procesando el audio en el servidor y con consentimiento informado; (2) errores de la IA, que se mitigan porque el agente revisa cada campo y los mensajes salen de reglas; (3) conectividad en anexos alejados, que se resuelve con el modo sin conexión de la versión completa.
+
+## Seguridad
+
+Pruebas y evaluación de seguridad clínica y de datos en [`docs/seguridad.md`](docs/seguridad.md). Veredicto: apta para demo con datos ficticios; no apta todavía para datos reales.
 
 ## Licencia
 

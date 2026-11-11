@@ -114,6 +114,15 @@ def seleccionar_mensajes(campos: dict, trimestre: int, pendientes_control: bool)
     if pendientes_control:
         referencias.append("No tiene o no acudió a sus controles")
 
+    # Lo mismo, dicho como tareas para recordarle a la gestante (lo ve el agente).
+    para_la_posta = []
+    if no_toma:
+        nombres = " y ".join(SUPLEMENTOS[s].lower() for s in no_toma)
+        sin = any(m in ("se_acabo", "no_le_dieron") for m in motivos)
+        para_la_posta.append(f"Recoger sus {nombres}" if sin else f"Contar que no toma sus {nombres}")
+    if pendientes_control:
+        para_la_posta.append("Pasar su control prenatal")
+
     mensajes: list[dict] = []
     vistos: set[str] = set()
 
@@ -138,7 +147,7 @@ def seleccionar_mensajes(campos: dict, trimestre: int, pendientes_control: bool)
         add(mid, "trimestre")
 
     return {"urgente": bool(signos_si), "signos_alarma": [SIGNOS_ALARMA[s] for s in signos_si],
-            "referencias": referencias, "mensajes": mensajes}
+            "referencias": referencias, "para_la_posta": para_la_posta, "mensajes": mensajes}
 
 
 def texto_derivacion(r: dict, signos: list[str], agente: str, celular_agente: str, eess: str, hora: str) -> str:
