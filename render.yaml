@@ -1,0 +1,16 @@
+# Render Blueprint: New → Blueprint → elegir este repositorio. Plan gratis (512 MB, se duerme a los 15 min).
+services:
+  - type: web
+    name: puriq
+    runtime: docker
+    plan: free
+    healthCheckPath: /
+    envVars:
+      - key: WHISPER_MODEL
+        value: tiny            # "small" no cabe en 512 MB
+      - key: ATAJO_AUDIO_EJEMPLO
+        value: "1"             # el audio de ejemplo usa su transcripción guardada (la CPU gratis es muy lenta)
+      - key: PURIQ_SECRETO
+        generateValue: true    # firma de los accesos; Render la genera al azar
+      - key: PURIQ_CODIGO_DEMO
+        value: "482913"        # código de activación del demo (datos ficticios)

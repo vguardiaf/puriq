@@ -208,3 +208,16 @@ def test_activacion_token_y_revocacion():
     c.headers["X-Token"] = r["token"]
     assert c.post("/api/auth/revocar", json={"token": r["token"]}).json()["ok"]
     assert c.get("/api/gestantes").status_code == 401
+
+
+def test_atajo_audio_ejemplo(monkeypatch):
+    """En servidores gratis el audio de ejemplo usa su transcripción guardada (sin cargar Whisper)."""
+    from pathlib import Path
+    from ai import transcribir as asr
+    data = Path(__file__).resolve().parents[1] / "data"
+    monkeypatch.setenv("ATAJO_AUDIO_EJEMPLO", "1")
+    r = asr.transcribir((data / "visita_ejemplo.wav").read_bytes())
+    assert r["texto"] == (data / "visita_ejemplo.txt").read_text(encoding="utf-8").strip()
+    assert asr._es_ejemplo(b"otro audio") is None
+    monkeypatch.setenv("ATAJO_AUDIO_EJEMPLO", "0")
+    assert asr._es_ejemplo((data / "visita_ejemplo.wav").read_bytes()) is None

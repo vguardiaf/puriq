@@ -8,8 +8,10 @@ Variables de entorno:
 """
 from __future__ import annotations
 
+import hashlib
 import io
 import os
+from pathlib import Path
 import threading
 import time
 from functools import lru_cache
@@ -25,9 +27,24 @@ def _modelo():
     return WhisperModel(nombre, device="cpu", compute_type="int8")
 
 
+def _es_ejemplo(audio: bytes) -> str | None:
+    """Texto guardado del audio de ejemplo, si este es ese audio y el atajo está activo
+    (servidores gratis con CPU mínima, donde Whisper tardaría minutos)."""
+    if os.getenv("ATAJO_AUDIO_EJEMPLO") != "1":
+        return None
+    raiz = Path(__file__).resolve().parents[1] / "data"
+    wav, txt = raiz / "visita_ejemplo.wav", raiz / "visita_ejemplo.txt"
+    if wav.exists() and txt.exists() and hashlib.sha256(audio).digest() == hashlib.sha256(wav.read_bytes()).digest():
+        return txt.read_text(encoding="utf-8").strip()
+    return None
+
+
 def transcribir(audio: bytes) -> dict:
     """Transcribe audio (webm/ogg/wav/mp3/m4a) en español. Devuelve texto, segundos de audio y de proceso."""
     t0 = time.time()
+    if (guardado := _es_ejemplo(audio)) is not None:
+        return {"texto": guardado, "duracion_audio_s": None, "proceso_s": round(time.time() - t0, 1),
+                "modelo": "transcripción guardada del audio de ejemplo"}
     with _lock:  # un solo modelo compartido; CPU chica
         segmentos, info = _modelo().transcribe(
             io.BytesIO(audio), language="es", vad_filter=True, beam_size=1,
